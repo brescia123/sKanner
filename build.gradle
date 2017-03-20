@@ -52,4 +52,5 @@ dependencies {
 
     compile "com.android.support:appcompat-v7:$support_version"
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':openCV3.2')
 }
