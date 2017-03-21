@@ -32,3 +32,6 @@ android {
 }
 
 ```
+
+Check also the [documentation](https://developer.android.com/google/play/publishing/multiple-apks.html) 
+regarding publishing multiple APKs to the Play Store.
