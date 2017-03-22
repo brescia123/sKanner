@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/brescia123/sKanner.svg?branch=master)](https://travis-ci.org/brescia123/sKanner)
+[![](https://jitpack.io/v/brescia123/sKanner.svg)](https://jitpack.io/#brescia123/sKanner)
+
 # sKanner (WIP)
 
 sKanner is an Android library written in Kotlin that uses [OpenCV for Android](http://opencv.org/platforms/android.html) to scan a 
