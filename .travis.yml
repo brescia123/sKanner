@@ -35,7 +35,4 @@ before_script:
   - sudo service x11-common stop || true
   - echo y | $ANDROID_HOME/tools/android --silent update sdk --no-ui --all --filter platform-tools
 
-after_script:
-  - cat /home/travis/build/brescia123/forms/build/outputs/lint-results-debug.xml
-
 script: ./gradlew build connectedCheck
