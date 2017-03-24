@@ -54,6 +54,3 @@ dependencies {
     compile project(':openCV3.2')
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
-repositories {
-    mavenCentral()
-}
