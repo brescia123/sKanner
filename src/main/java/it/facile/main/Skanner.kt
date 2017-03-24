@@ -7,11 +7,14 @@ import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 
 typealias Pt = Pair<Int, Int>
-data class Rectangle(val p1: Pt, val p2: Pt, val p3: Pt, val p4: Pt)
+data class Rectangle(val p1: Pt, val p2: Pt, val p3: Pt, val p4: Pt) {
+    fun asList() = listOf(p1, p2, p3, p4)
+}
 
 fun detectRectangle(image: Bitmap): Rectangle = (0..2)
         .map { image.toMat().detectContours(it) } // Find all the contours ad different channel mixes
         .reduce { acc, arrayList -> acc.addAll(arrayList); acc } // Accumulate all the contours into a list
+        .filter { Imgproc.contourArea(it) > (image.width * image.height) / 10 } // Ignore contours too small
         .sortedByDescending(Imgproc::contourArea)
         .map { it.toMatOfPoint2f() }
         .map { it.approxPolyDP(Imgproc.arcLength(it, true) * 0.02, true) } // Approximate the contour to a polygon
