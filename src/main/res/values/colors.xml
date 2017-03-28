@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="adjustViewColor">#ff59a9ff</color>
+    <color name="adjustViewColorTransparent">#6859a9ff</color>
+</resources>

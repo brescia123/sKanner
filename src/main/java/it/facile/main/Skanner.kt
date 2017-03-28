@@ -22,7 +22,7 @@ fun detectRectangle(image: Bitmap): Rectangle = (0..2)
         .filter { it -> it.maxCosine() < 0.3 } // Select the ones that have a doc shape
         .map { it.toRectangle() }
         .firstOrNull() // Take the first (max area)
-        ?: image.perimeterRectangle() // if no rectangle is found return the bitmap perimeter contour
+        ?: image.perimeterRectangleScaled(0.8f) // if no rectangle is found return the bitmap perimeter contour
 
 internal fun Mat.detectContours(ch: Int): ArrayList<MatOfPoint> {
     val temp = Mat()

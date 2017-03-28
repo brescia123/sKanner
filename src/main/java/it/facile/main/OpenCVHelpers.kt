@@ -19,6 +19,17 @@ internal fun Pt.toPoint() = Point(first.toDouble(), second.toDouble())
 internal fun Point.toPt() = Pt(x.toInt(), y.toInt())
 
 internal fun Bitmap.perimeterRectangle() = Rectangle(0 to 0, 0 to height, width to height, width to 0)
+internal fun Bitmap.perimeterRectangleScaled(ratio: Float): Rectangle {
+    val scaledWidth = (width * ratio).toInt()
+    val scaledHeight = (height * ratio).toInt()
+    val horizontalShift = (width - scaledWidth) / 2
+    val verticalShift = (height - scaledHeight) / 2
+    val p1 = horizontalShift to verticalShift
+    val p2 = horizontalShift to scaledHeight + verticalShift
+    val p3 = scaledWidth + horizontalShift to scaledHeight + verticalShift
+    val p4 = scaledWidth + horizontalShift to verticalShift
+    return Rectangle(p1, p2, p3, p4)
+}
 
 internal fun MatOfPoint2f.maxCosine(): Double = (2..4)
         .map { Math.abs(angle(toList()[it % 4], toList()[it - 2], toList()[it - 1])) }
