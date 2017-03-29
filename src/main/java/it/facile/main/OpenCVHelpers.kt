@@ -7,6 +7,7 @@ import org.opencv.imgproc.Imgproc
 
 internal fun MatOfPoint.toMatOfPoint2f() = MatOfPoint2f().also { matOfPoint2f: MatOfPoint2f -> convertTo(matOfPoint2f, CvType.CV_32F) }
 internal fun Bitmap.toMat(): Mat = Mat().also { mat: Mat -> Utils.bitmapToMat(this, mat) }
+internal fun Bitmap.toMatOfPoint2f(): MatOfPoint2f = MatOfPoint2f().also { mat: Mat -> Utils.bitmapToMat(this, mat) }
 internal fun Mat.toBitmap(config: Bitmap.Config): Bitmap = Bitmap.createBitmap(cols(), rows(), config).also { bitmap: Bitmap -> Utils.matToBitmap(this, bitmap) }
 
 internal fun Rectangle.toMatOfPoint2f() = MatOfPoint2f(p1.toPoint(), p2.toPoint(), p3.toPoint(), p4.toPoint())
