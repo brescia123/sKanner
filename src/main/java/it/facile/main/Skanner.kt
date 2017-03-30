@@ -2,18 +2,61 @@
 
 package it.facile.main
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.Environment
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
-import java.io.Serializable
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 
+/**
+ * Function that allow to scan a photo and detect a document inside it.
+ *
+ * @param originalImagePath the path of the image to be scanned.
+ * @param context a context reference.
+ * @param sampleSize the sample size used to decode the file into a Bitmap (default = 2).
+ */
+fun scanDocument(originalImagePath: String, context: Context, sampleSize: Int = 4): ScannedDocument {
 
-typealias Pt = Pair<Int, Int>
-data class Rectangle(val p1: Pt, val p2: Pt, val p3: Pt, val p4: Pt): Serializable {
-    fun asList() = listOf(p1, p2, p3, p4)
+    val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+    val originalBitmap = BitmapFactory.decodeFile(originalImagePath, options)
+    val detectedRectangle = detectRectangle(originalBitmap)
+    val transformedBitmap = transformPerspective(originalBitmap, detectedRectangle)
+
+    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    val originalFileName = File(originalImagePath).nameWithoutExtension
+    val transformedFile = File.createTempFile("${originalFileName}_TRANSFORMED", ".jpg", storageDir)
+
+    val fos = FileOutputStream(transformedFile)
+    transformedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
+    fos.close()
+
+    return ScannedDocument(originalImagePath, transformedFile.absolutePath, detectedRectangle.scale(options.inSampleSize.toFloat()))
 }
 
-fun detectRectangle(image: Bitmap): Rectangle = (0..2)
+/**
+ * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] with the
+ * following name scheme: SCAN_yyyyMMdd_HHmmss.jpg
+ *
+ * @param context a context reference.
+ */
+fun createOriginalImageFile(context: Context): File {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALIAN).format(Date())
+    val imageFileName = "SCAN_$timeStamp"
+    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    val image = File.createTempFile(imageFileName, ".jpg", storageDir)
+    return image
+}
+
+
+/**
+ * Apply an algorithm to detect the bigger, doc-shaped rectangle within a Bitmap.
+ */
+internal fun detectRectangle(image: Bitmap): Rectangle = (0..2)
         .map { image.toMat().detectContours(it) } // Find all the contours ad different channel mixes
         .reduce { acc, arrayList -> acc.addAll(arrayList); acc } // Accumulate all the contours into a list
         .filter { Imgproc.contourArea(it) > (image.width * image.height) / 10 } // Ignore contours too small
@@ -26,7 +69,10 @@ fun detectRectangle(image: Bitmap): Rectangle = (0..2)
         .firstOrNull() // Take the first (max area)
         ?: image.perimeterRectangleScaled(0.8f) // if no rectangle is found return the bitmap perimeter contour
 
-fun transformPerspective(image: Bitmap, rect: Rectangle): Bitmap {
+/**
+ * Apply an algorithm transform the perspective of a given [Rectangle] within a Bitmap.
+ */
+internal fun transformPerspective(image: Bitmap, rect: Rectangle): Bitmap {
 
     val orderedRectangle = rect.order()
 
@@ -59,21 +105,29 @@ fun transformPerspective(image: Bitmap, rect: Rectangle): Bitmap {
     return doc.toBitmap(Bitmap.Config.ARGB_8888)
 }
 
+/**
+ * Order the points of a [Rectangle] as following:
+ * - p1 = Top-Left
+ * - p2 = Top-Right
+ * - p3 = Bottom-Right
+ * - p4 = Bottom-Left
+ */
 private fun Rectangle.order(): Rectangle = with(asList()) {
-    val tl = findMinWith(Pt::sum)
-    val tr = findMinWith(Pt::diff)
-    val br = findMaxWith(Pt::sum)
-    val bl = findMaxWith(Pt::diff)
+    fun List<Pt>.findMaxWith(func: Pt.() -> Int): Pt = with(map(func)) { this@findMaxWith[indexOf(max())] }
+    fun List<Pt>.findMinWith(func: Pt.() -> Int): Pt = with(map(func)) { this@findMinWith[indexOf(min())] }
+    val sum: Pt.() -> Int = { first + second }
+    val diff: Pt.() -> Int = { first - second }
+    val tl = findMinWith(sum)
+    val tr = findMinWith(diff)
+    val br = findMaxWith(sum)
+    val bl = findMaxWith(diff)
     return Rectangle(tl, tr, br, bl)
 }
 
-private fun Pt.sum(): Int = first + second
-private fun Pt.diff(): Int = first - second
-
-private fun List<Pt>.findMaxWith(func: Pt.() -> Int): Pt = with(map(func)) { this@findMaxWith[indexOf(max())] }
-private fun List<Pt>.findMinWith(func: Pt.() -> Int): Pt = with(map(func)) { this@findMinWith[indexOf(min())] }
-
-internal fun Mat.detectContours(ch: Int): ArrayList<MatOfPoint> {
+/**
+ * Apply an algorithm to detect a list of contours within a Mat.
+ */
+private fun Mat.detectContours(ch: Int): ArrayList<MatOfPoint> {
     val temp = Mat()
     Imgproc.cvtColor(this, temp, Imgproc.COLOR_BGR2RGB) // Change colors to BGR
     val tempBlurred = Mat()

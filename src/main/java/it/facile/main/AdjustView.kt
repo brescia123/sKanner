@@ -24,10 +24,15 @@ class AdjustView : FrameLayout {
     private var detectedRectangle: Rectangle? = null
     private var imageBitmap: Bitmap? = null
     private var imageView: ImageView? = null
+    private var cornerView1: ImageView? = null
+    private var cornerView2: ImageView? = null
+    private var cornerView3: ImageView? = null
+    private var cornerView4: ImageView? = null
+
+    private val cornerIndicatorRadiusPx: Int by lazy { resources.getDimension(R.dimen.pointer_radius).toInt() / 2 }
 
     private var alreadyMeasured = false
 
-    private val cornerIndicatorRadiusPx: Int by lazy { resources.getDimension(R.dimen.corner_indicator_radius).toInt() / 2 }
     private val paint: Paint by lazy {
         Paint().apply {
             color = ContextCompat.getColor(context, R.color.adjustViewColor)
@@ -35,11 +40,6 @@ class AdjustView : FrameLayout {
             isAntiAlias = true
         }
     }
-
-    private lateinit var cornerView1: ImageView
-    private lateinit var cornerView2: ImageView
-    private lateinit var cornerView3: ImageView
-    private lateinit var cornerView4: ImageView
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
@@ -49,10 +49,12 @@ class AdjustView : FrameLayout {
 
     override fun dispatchDraw(canvas: Canvas?) {
         super.dispatchDraw(canvas)
-        canvas?.drawLine(from = cornerView1.getPosition(), to = cornerView2.getPosition(), paint = paint)
-        canvas?.drawLine(from = cornerView2.getPosition(), to = cornerView3.getPosition(), paint = paint)
-        canvas?.drawLine(from = cornerView3.getPosition(), to = cornerView4.getPosition(), paint = paint)
-        canvas?.drawLine(from = cornerView4.getPosition(), to = cornerView1.getPosition(), paint = paint)
+
+        val zeroPt = 0 to 0
+        canvas?.drawLine(from = cornerView1?.getPosition() ?: zeroPt, to = cornerView2?.getPosition() ?: zeroPt, paint = paint)
+        canvas?.drawLine(from = cornerView2?.getPosition() ?: zeroPt, to = cornerView3?.getPosition() ?: zeroPt, paint = paint)
+        canvas?.drawLine(from = cornerView3?.getPosition() ?: zeroPt, to = cornerView4?.getPosition() ?: zeroPt, paint = paint)
+        canvas?.drawLine(from = cornerView4?.getPosition() ?: zeroPt, to = cornerView1?.getPosition() ?: zeroPt, paint = paint)
     }
 
     fun init(bitmap: Bitmap, detectedRectangle: Rectangle) {
@@ -64,8 +66,8 @@ class AdjustView : FrameLayout {
     }
 
     private fun calculateScaleFactor(bitmap: Bitmap, imageView: ImageView): Float =
-            minOf(imageView.measuredWidth.toFloat() / (imageView.drawable as BitmapDrawable).bitmap.width,
-                    imageView.measuredHeight.toFloat() / (imageView.drawable as BitmapDrawable).bitmap.height)
+            minOf(imageView.measuredWidth.toFloat() / bitmap.width,
+                    imageView.measuredHeight.toFloat() / bitmap.height)
 
     private fun drawPointers() {
         if (alreadyMeasured || imageBitmap == null || imageView == null || detectedRectangle == null) return

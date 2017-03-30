@@ -3,9 +3,9 @@
     android:shape="oval">
     <solid android:color="@color/adjustViewColorTransparent" />
     <size
-        android:width="@dimen/corner_indicator_radius"
-        android:height="@dimen/corner_indicator_radius" />
+        android:width="@dimen/pointer_radius"
+        android:height="@dimen/pointer_radius" />
     <stroke
-        android:width="2dp"
+        android:width="5dp"
         android:color="@color/adjustViewColor"/>
 </shape>
