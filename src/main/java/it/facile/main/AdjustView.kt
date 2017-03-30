@@ -1,9 +1,13 @@
 package it.facile.main
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PointF
+import android.graphics.drawable.BitmapDrawable
+import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -26,7 +30,7 @@ class AdjustView : FrameLayout {
     private val cornerIndicatorRadiusPx: Int by lazy { resources.getDimension(R.dimen.corner_indicator_radius).toInt() / 2 }
     private val paint: Paint by lazy {
         Paint().apply {
-            color = resources.getColor(R.color.adjustViewColor)
+            color = ContextCompat.getColor(context, R.color.adjustViewColor)
             strokeWidth = 2f
             isAntiAlias = true
         }
@@ -37,16 +41,10 @@ class AdjustView : FrameLayout {
     private lateinit var cornerView3: ImageView
     private lateinit var cornerView4: ImageView
 
-
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        if (alreadyMeasured) return
-        Log.d("AdjustView", "OnMeasure - imageView: (${imageView?.measuredWidth}, ${imageView?.measuredHeight})")
-        val scaleFactor = calculateScaleFactor(imageBitmap, imageView)
-        Log.d("AdjustView", "OnMeasure - scaleFactor: $scaleFactor")
-        detectedRectangle?.scale(scaleFactor)?.let { initCornerViews(it) }
+        if (alreadyMeasured.not()) drawPointers()
         alreadyMeasured = true
-        invalidate()
     }
 
     override fun dispatchDraw(canvas: Canvas?) {
@@ -57,49 +55,52 @@ class AdjustView : FrameLayout {
         canvas?.drawLine(from = cornerView4.getPosition(), to = cornerView1.getPosition(), paint = paint)
     }
 
-    fun init(imagePath: String, detectedRectangle: Rectangle) {
-        val options = BitmapFactory.Options()
-        options.inSampleSize = 2
-        imageBitmap = BitmapFactory.decodeFile(imagePath, options)
-        imageBitmap?.let { imageView = buildImageView(it) }
-        this.detectedRectangle = detectedRectangle.scale(1 / options.inSampleSize.toFloat())
+    fun init(bitmap: Bitmap, detectedRectangle: Rectangle) {
+        imageBitmap = bitmap
+        imageView = buildImageView()
+        this.detectedRectangle = detectedRectangle
         addView(imageView)
         invalidate()
     }
 
-    private fun calculateScaleFactor(bitmap: Bitmap?, imageView: ImageView?): Float {
-        if (bitmap == null || imageView == null) return 1f
-        val toFloat = minOf(imageView.measuredWidth.toFloat() / bitmap.width,
-                imageView.measuredHeight.toFloat() / bitmap.height)
-        Log.d("AdjustView", "scaleFactor: $toFloat")
-        return toFloat
+    private fun calculateScaleFactor(bitmap: Bitmap, imageView: ImageView): Float =
+            minOf(imageView.measuredWidth.toFloat() / (imageView.drawable as BitmapDrawable).bitmap.width,
+                    imageView.measuredHeight.toFloat() / (imageView.drawable as BitmapDrawable).bitmap.height)
+
+    private fun drawPointers() {
+        if (alreadyMeasured || imageBitmap == null || imageView == null || detectedRectangle == null) return
+        initCornerViews(detectedRectangle!!, imageBitmap!!, imageView!!)
+        alreadyMeasured = true
+        invalidate()
     }
 
-    private fun initCornerViews(rectangle: Rectangle) {
-        cornerView1 = buildCornerView(rectangle.p1)
-        cornerView2 = buildCornerView(rectangle.p2)
-        cornerView3 = buildCornerView(rectangle.p3)
-        cornerView4 = buildCornerView(rectangle.p4)
+    private fun initCornerViews(rectangle: Rectangle, bitmap: Bitmap, imageView: ImageView) {
+        val scaledRectangle = rectangle.scale(calculateScaleFactor(bitmap, imageView))
+        cornerView1 = buildPointerView(scaledRectangle.p1)
+        cornerView2 = buildPointerView(scaledRectangle.p2)
+        cornerView3 = buildPointerView(scaledRectangle.p3)
+        cornerView4 = buildPointerView(scaledRectangle.p4)
         addView(cornerView1)
         addView(cornerView2)
         addView(cornerView3)
         addView(cornerView4)
     }
 
-    private fun buildImageView(bitmap: Bitmap) = ImageView(context).apply {
+    private fun buildImageView() = ImageView(context).apply {
         layoutParams = LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         adjustViewBounds = true
-        setImageBitmap(bitmap)
+
+        setImageBitmap(imageBitmap)
     }
 
-    private fun buildCornerView(pt: Pt): ImageView = ImageView(context).apply {
+    private fun buildPointerView(pt: Pt): ImageView = ImageView(context).apply {
         layoutParams = LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         setImageResource(R.drawable.pointer)
         setPosition(pt)
         setOnTouchListener(TouchListener())
     }
 
-    private fun ImageView.getPosition(): Pt = x.toInt() + cornerIndicatorRadiusPx to y.toInt() + cornerIndicatorRadiusPx
+    private fun ImageView.getPosition(): Pt = Math.round(x) + cornerIndicatorRadiusPx to Math.round(y) + cornerIndicatorRadiusPx
 
     private fun ImageView.setPosition(pt: Pt) {
         x = (pt.first.toFloat()) - cornerIndicatorRadiusPx
@@ -108,7 +109,6 @@ class AdjustView : FrameLayout {
 
     private fun Canvas.drawLine(from: Pt, to: Pt, paint: Paint) =
             drawLine(from.first.toFloat(), from.second.toFloat(), to.first.toFloat(), to.second.toFloat(), paint)
-
 
     private inner class TouchListener : OnTouchListener {
 
@@ -138,11 +138,3 @@ class AdjustView : FrameLayout {
 
     }
 }
-
-private fun Rectangle.scale(scaleFactor: Float) = Rectangle(
-        p1.scale(scaleFactor),
-        p2.scale(scaleFactor),
-        p3.scale(scaleFactor),
-        p4.scale(scaleFactor))
-
-private fun Pt.scale(scaleFactor: Float): Pt = (first * scaleFactor).toInt() to (second * scaleFactor).toInt()

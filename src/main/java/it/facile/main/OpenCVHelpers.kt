@@ -32,6 +32,16 @@ internal fun Bitmap.perimeterRectangleScaled(ratio: Float): Rectangle {
     return Rectangle(p1, p2, p3, p4)
 }
 
+
+internal fun Rectangle.scale(scaleFactor: Float) = Rectangle(
+        p1.scale(scaleFactor),
+        p2.scale(scaleFactor),
+        p3.scale(scaleFactor),
+        p4.scale(scaleFactor))
+
+internal fun Pt.scale(scaleFactor: Float): Pt = Math.round(first * scaleFactor) to Math.round(second * scaleFactor)
+
+
 internal fun MatOfPoint2f.maxCosine(): Double = (2..4)
         .map { Math.abs(angle(toList()[it % 4], toList()[it - 2], toList()[it - 1])) }
         .max() ?: 0.0
