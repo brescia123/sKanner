@@ -4,6 +4,13 @@ import android.graphics.Bitmap
 import org.opencv.android.Utils
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
+import java.io.Serializable
+
+typealias Pt = Pair<Int, Int>
+
+data class Rectangle(val p1: Pt, val p2: Pt, val p3: Pt, val p4: Pt): Serializable {
+    fun asList() = listOf(p1, p2, p3, p4)
+}
 
 internal fun MatOfPoint.toMatOfPoint2f() = MatOfPoint2f().also { matOfPoint2f: MatOfPoint2f -> convertTo(matOfPoint2f, CvType.CV_32F) }
 internal fun Bitmap.toMat(): Mat = Mat().also { mat: Mat -> Utils.bitmapToMat(this, mat) }

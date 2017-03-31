@@ -1,11 +1,7 @@
 package it.facile.main
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.PointF
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.*
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -21,13 +17,13 @@ class AdjustView : FrameLayout {
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    private var detectedRectangle: Rectangle? = null
+    private var scannedDocument: Scan? = null
     private var imageBitmap: Bitmap? = null
     private var imageView: ImageView? = null
-    private var cornerView1: ImageView? = null
-    private var cornerView2: ImageView? = null
-    private var cornerView3: ImageView? = null
-    private var cornerView4: ImageView? = null
+    private var pointerView1: ImageView? = null
+    private var pointerView2: ImageView? = null
+    private var pointerView3: ImageView? = null
+    private var pointerView4: ImageView? = null
 
     private val cornerIndicatorRadiusPx: Int by lazy { resources.getDimension(R.dimen.pointer_radius).toInt() / 2 }
 
@@ -51,47 +47,57 @@ class AdjustView : FrameLayout {
         super.dispatchDraw(canvas)
 
         val zeroPt = 0 to 0
-        canvas?.drawLine(from = cornerView1?.getPosition() ?: zeroPt, to = cornerView2?.getPosition() ?: zeroPt, paint = paint)
-        canvas?.drawLine(from = cornerView2?.getPosition() ?: zeroPt, to = cornerView3?.getPosition() ?: zeroPt, paint = paint)
-        canvas?.drawLine(from = cornerView3?.getPosition() ?: zeroPt, to = cornerView4?.getPosition() ?: zeroPt, paint = paint)
-        canvas?.drawLine(from = cornerView4?.getPosition() ?: zeroPt, to = cornerView1?.getPosition() ?: zeroPt, paint = paint)
+        canvas?.drawLine(from = pointerView1?.getPosition() ?: zeroPt, to = pointerView2?.getPosition() ?: zeroPt, paint = paint)
+        canvas?.drawLine(from = pointerView2?.getPosition() ?: zeroPt, to = pointerView3?.getPosition() ?: zeroPt, paint = paint)
+        canvas?.drawLine(from = pointerView3?.getPosition() ?: zeroPt, to = pointerView4?.getPosition() ?: zeroPt, paint = paint)
+        canvas?.drawLine(from = pointerView4?.getPosition() ?: zeroPt, to = pointerView1?.getPosition() ?: zeroPt, paint = paint)
     }
 
-    fun init(bitmap: Bitmap, detectedRectangle: Rectangle) {
-        imageBitmap = bitmap
+    fun init(scannedDoc: Scan) {
+        imageBitmap = BitmapFactory.decodeFile(scannedDoc.originalImageURI.path)
         imageView = buildImageView()
-        this.detectedRectangle = detectedRectangle
+        scannedDocument = scannedDoc
         addView(imageView)
         invalidate()
     }
+
+    fun getNewRectangle(): Rectangle? {
+        if (scannedDocument == null) throw IllegalStateException("The init method was not called.")
+        val detectedRectangle = scannedDocument!!.detectedRectangle
+        return detectedRectangle.copy(
+                        p1 = pointerView1?.getPosition()?.scale(1 / calculateScaleFactor(imageBitmap!!, imageView!!)) ?: detectedRectangle.p1,
+                        p2 = pointerView2?.getPosition()?.scale(1 / calculateScaleFactor(imageBitmap!!, imageView!!)) ?: detectedRectangle.p2,
+                        p3 = pointerView3?.getPosition()?.scale(1 / calculateScaleFactor(imageBitmap!!, imageView!!)) ?: detectedRectangle.p3,
+                        p4 = pointerView4?.getPosition()?.scale(1 / calculateScaleFactor(imageBitmap!!, imageView!!)) ?: detectedRectangle.p4)
+    }
+
 
     private fun calculateScaleFactor(bitmap: Bitmap, imageView: ImageView): Float =
             minOf(imageView.measuredWidth.toFloat() / bitmap.width,
                     imageView.measuredHeight.toFloat() / bitmap.height)
 
     private fun drawPointers() {
-        if (alreadyMeasured || imageBitmap == null || imageView == null || detectedRectangle == null) return
-        initCornerViews(detectedRectangle!!, imageBitmap!!, imageView!!)
+        if (alreadyMeasured || imageBitmap == null || imageView == null || scannedDocument == null) return
+        initCornerViews(scannedDocument!!.detectedRectangle, imageBitmap!!, imageView!!)
         alreadyMeasured = true
         invalidate()
     }
 
     private fun initCornerViews(rectangle: Rectangle, bitmap: Bitmap, imageView: ImageView) {
         val scaledRectangle = rectangle.scale(calculateScaleFactor(bitmap, imageView))
-        cornerView1 = buildPointerView(scaledRectangle.p1)
-        cornerView2 = buildPointerView(scaledRectangle.p2)
-        cornerView3 = buildPointerView(scaledRectangle.p3)
-        cornerView4 = buildPointerView(scaledRectangle.p4)
-        addView(cornerView1)
-        addView(cornerView2)
-        addView(cornerView3)
-        addView(cornerView4)
+        pointerView1 = buildPointerView(scaledRectangle.p1)
+        pointerView2 = buildPointerView(scaledRectangle.p2)
+        pointerView3 = buildPointerView(scaledRectangle.p3)
+        pointerView4 = buildPointerView(scaledRectangle.p4)
+        addView(pointerView1)
+        addView(pointerView2)
+        addView(pointerView3)
+        addView(pointerView4)
     }
 
     private fun buildImageView() = ImageView(context).apply {
         layoutParams = LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         adjustViewBounds = true
-
         setImageBitmap(imageBitmap)
     }
 
