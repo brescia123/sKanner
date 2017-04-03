@@ -24,46 +24,32 @@ data class Skanner(val config: Config) {
     }
 
     companion object {
+
         /**
          * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] with the
-         * following name scheme: SCAN_yyyyMMdd_HHmmss.jpg
+         * following name scheme: SCAN_yyyyMMdd_HHmmss.jpg . It returns the URI of the created file,
+         * null if there was a problem.
          *
          * @param context a context reference.
          */
-        fun createFullSizeImageFile(context: Context): File {
+        fun createFullSizeImageFile(context: Context): URI? {
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALIAN).format(Date())
             val imageFileName = "SCAN_$timeStamp"
-            return createFile(context, imageFileName)
+            return createJPGFile(context, imageFileName)
         }
 
-        /**
-         * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] with the
-         * following name scheme: [[originalImageURI]]_SCALED.jpg
-         *
-         * @param context a context reference.
-         * @param originalImageURI the original image URI.
-         */
-        fun createScaledImageFile(originalImageURI: URI, context: Context): File =
-                createFile(context, originalImageURI.fileNameWith(suffix = "_SCALED"))
-
-        /**
-         * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] with the
-         * following name scheme: [[originalImageURI]]_CORRECTED.jpg
-         *
-         * @param context a context reference.
-         * @param originalImageURI the original image URI.
-         */
-        fun createCorrectedImageFile(originalImageURI: URI, context: Context): File =
-                createFile(context, originalImageURI.fileNameWith(suffix = "_CORRECTED"))
-
-        private fun createFile(context: Context, imageFileName: String): File {
+        /** Create a JPG file within Environment.DIRECTORY_PICTURES with the given name and return its URI,
+         * null if there was a problem. */
+        private fun createJPGFile(context: Context, imageFileName: String): URI? {
             val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-            val fullSizeImage = File.createTempFile(imageFileName, ".jpg", storageDir)
-            return fullSizeImage
-        }
-
-        private fun URI.fileNameWith(suffix: String): String = with(File(this)) {
-            return "$nameWithoutExtension$suffix"
+            if (storageDir == null)
+                Log.e(this::class.java.simpleName, "Error while trying to getExternalFilesDir Environment.DIRECTORY_PICTURES")
+            try {
+                return File.createTempFile(imageFileName, ".jpg", storageDir).toURI()
+            } catch (e: Exception) {
+                Log.e(this::class.java.simpleName, "Error while trying to create file $imageFileName within Environment.DIRECTORY_PICTURES", e)
+                return null
+            }
         }
     }
 
@@ -72,39 +58,63 @@ data class Skanner(val config: Config) {
      *
      * @param originalImageURI the path of the image to be scanned.
      */
-    fun scanDocument(originalImageURI: URI, originalScaledImageURI: URI): Scan {
+    fun scanDocument(originalImageURI: URI, context: Context): Scan? {
+        val scaledImageURI: URI = createJPGFile(
+                context = context,
+                imageFileName = File(originalImageURI).fileNameWith(suffix = "_SCALED")) ?: return null
 
         return loadScaledBitmap(originalImageURI)
-                .saveImage(File(originalScaledImageURI))
-                .detectRectangle()
-                .buildScan(originalScaledImageURI)
+                ?.saveImage(scaledImageURI)
+                ?.detectRectangle()
+                ?.buildScan(scaledImageURI)
     }
+
 
     /**
      * Function that allows to correct a [Scan] and obtain the transformed Bitmap.
      */
-    fun correctPerspective(scan: Scan, correctedImageURI: URI): URI {
-        loadScaledBitmap(scan.originalImageURI)
-                .correctPerspective(scan.detectedRectangle)
-                .saveImage(File(correctedImageURI))
+    fun correctPerspective(scan: Scan, context: Context): URI? {
+        val correctedImageURI: URI = createJPGFile(
+                context = context,
+                imageFileName = File(scan.originalImageURI).fileNameWith(suffix = "_CORRECTED")) ?: return null
+        val savedBitmap = loadScaledBitmap(scan.originalImageURI)
+                ?.correctPerspective(scan.detectedRectangle)
+                ?.saveImage(correctedImageURI)
 
-        return correctedImageURI
+        return if (savedBitmap != null) correctedImageURI else null
     }
 
-
-    private fun Bitmap.saveImage(file: File): Bitmap {
-        val fos = FileOutputStream(file)
-        compress(Bitmap.CompressFormat.JPEG, 100, fos)
-        fos.close()
-        return this
+    /** Save the Bitmap to the given file. Return the saved Bitmap, null if there was a problem. */
+    private fun Bitmap.saveImage(fileURI: URI): Bitmap? {
+        try {
+            val fos = FileOutputStream(File(fileURI))
+            val compressSuccessful = compress(Bitmap.CompressFormat.JPEG, 100, fos)
+            if (compressSuccessful.not()) Log.e(this::class.java.simpleName, "Error while trying to compress to file ($fileURI) a Bitmap")
+            fos.close()
+            return this
+        } catch (e: Exception) {
+            Log.e(this::class.java.simpleName, "Error while trying to save to file ($fileURI) a Bitmap", e)
+            return null
+        }
     }
+
 
     private fun Rectangle.buildScan(imageURI: URI) = Scan(imageURI, this)
 
-    private fun loadScaledBitmap(imageURI: URI): Bitmap =
-            BitmapFactory.decodeFile(
+    /** Load and return a Bitmap scaled using [config.scaleFactor], null if there was a problem. */
+    private fun loadScaledBitmap(imageURI: URI): Bitmap? = BitmapFactory
+            .decodeFile(
                     imageURI.path,
                     BitmapFactory.Options().apply { inSampleSize = config.scaleFactor })
+            .also {
+                if (it == null) Log.e(this::class.java.simpleName, "Error while trying to load a scaled Bitmap from $imageURI")
+            }
+
+
+    /** Append the given suffix to the file name without extension. */
+    private fun File.fileNameWith(suffix: String): String = with(this) {
+        return "$nameWithoutExtension$suffix"
+    }
 
     /**
      * Configuration class for the Skanner
@@ -112,5 +122,5 @@ data class Skanner(val config: Config) {
      * @property scaleFactor Used to decode the original image file into a scaled Bitmap
      * ([BitmapFactory.Options.inSampleSize]) (default = 1).
      */
-    data class Config(val scaleFactor: Int = 1) : Serializable
+    data class Config(val scaleFactor: Int = 2) : Serializable
 }
