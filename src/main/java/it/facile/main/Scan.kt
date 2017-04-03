@@ -1,5 +1,7 @@
 package it.facile.main
 
+import java.io.File
+import java.io.FileNotFoundException
 import java.io.Serializable
 import java.net.URI
 
@@ -9,5 +11,9 @@ import java.net.URI
  * @property originalImageURI URI of the original image.
  * @property detectedRectangle detected document rectangle.
  */
-data class Scan(val originalImageURI: URI, val detectedRectangle: Rectangle) : Serializable
+data class Scan(val originalImageURI: URI, val detectedRectangle: Rectangle) : Serializable {
+    init {
+        if (File(originalImageURI).exists().not()) throw FileNotFoundException()
+    }
+}
 
