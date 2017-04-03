@@ -125,5 +125,12 @@ class Skanner(val config: Config) {
      * @property scaleFactor Used to decode the original image file into a scaled Bitmap
      * ([BitmapFactory.Options.inSampleSize]) (default = 1).
      */
-    data class Config(val scaleFactor: Int = 1) : Serializable
+    data class Config(val scaleFactor: IntPowerOf2 = IntPowerOf2(1)) : Serializable
+
+    data class IntPowerOf2(val value: Int){
+        init {
+            if ((value and value - 1 == 0).not() || value <= 0)
+                throw IllegalArgumentException("value should be a power of 2 and positive")
+        }
+    }
 }
