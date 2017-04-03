@@ -1,14 +1,30 @@
 [![Build Status](https://travis-ci.org/brescia123/sKanner.svg?branch=master)](https://travis-ci.org/brescia123/sKanner)
 [![](https://jitpack.io/v/brescia123/sKanner.svg)](https://jitpack.io/#brescia123/sKanner)
 
-# sKanner (WIP)
+# Skanner (WIP)
 
-sKanner is an Android library written in Kotlin that uses [OpenCV for Android](http://opencv.org/platforms/android.html) to scan a 
-document within a given image.
+Skanner is an Android library written in Kotlin that uses [OpenCV for Android](http://opencv.org/platforms/android.html) to scan a document within a given image.
+
+## Download
+
+To include Skanner into your app using gradle just add [JitPack](https://jitpack.io/) repository to your root `build.gradle`
+```groovy
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+and add the dependency to your app `build.gradle`
+```groovy
+compile 'com.github.brescia123:skanner:x.x.x'
+```
+replacing x.x.x with the [last release](https://github.com/brescia123/skanner/releases) version.
 
 ## Multi APK support
 
-Since sKanner uses OpenCV that is written in C++ it has to include its native libraries compiled for every architecture.
+Since Skanner uses OpenCV that is written in C++ it has to include its native libraries compiled for every architecture.
 The supported architectures are:
 
 - arm64-v8a
