@@ -13,7 +13,7 @@ import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class Skanner(val config: Config) {
+class Skanner(val config: Config) {
 
     init {
         if (OpenCVLoader.initDebug()) {
@@ -69,9 +69,12 @@ data class Skanner(val config: Config) {
                 ?.buildScan(scaledImageURI)
     }
 
-
     /**
-     * Function that allows to correct a [Scan] and obtain the transformed Bitmap.
+     * Function that allows to correct the perspective of a [Scan]. It returns the URI of the produced
+     * image file or null if there was some problem.
+     *
+     * @param scan the source [Scan].
+     * @param context a [Context] reference.
      */
     fun correctPerspective(scan: Scan, context: Context): URI? {
         val correctedImageURI: URI = createJPGFile(

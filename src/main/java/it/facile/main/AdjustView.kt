@@ -128,7 +128,7 @@ class AdjustView : FrameLayout {
             when (eid) {
                 MotionEvent.ACTION_MOVE -> {
                     val mv = PointF(event.x - downPt.x, event.y - downPt.y)
-                    if (startPt.x + mv.x < imageView?.width ?: width && startPt.y + mv.y < imageView?.height ?: height && startPt.x + mv.x > 0 && startPt.y + mv.y > 0) {
+                    if (insideImage(mv)) {
                         v.x = startPt.x + mv.x - cornerIndicatorRadiusPx
                         v.y = startPt.y + mv.y - cornerIndicatorRadiusPx
                         startPt = PointF(v.x + cornerIndicatorRadiusPx, v.y + cornerIndicatorRadiusPx)
@@ -143,6 +143,8 @@ class AdjustView : FrameLayout {
             invalidate()
             return true
         }
+
+        private fun insideImage(mv: PointF) = startPt.x + mv.x < imageView?.width ?: width && startPt.y + mv.y < imageView?.height ?: height && startPt.x + mv.x > 0 && startPt.y + mv.y > 0
 
     }
 }
