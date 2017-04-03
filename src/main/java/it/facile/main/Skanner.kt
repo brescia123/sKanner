@@ -101,7 +101,7 @@ data class Skanner(val config: Config) {
 
     private fun Rectangle.buildScan(imageURI: URI) = Scan(imageURI, this)
 
-    /** Load and return a Bitmap scaled using [config.scaleFactor], null if there was a problem. */
+    /** Load and return a Bitmap scaled using [Config.scaleFactor], null if there was a problem. */
     private fun loadScaledBitmap(imageURI: URI): Bitmap? = BitmapFactory
             .decodeFile(
                     imageURI.path,
@@ -122,5 +122,5 @@ data class Skanner(val config: Config) {
      * @property scaleFactor Used to decode the original image file into a scaled Bitmap
      * ([BitmapFactory.Options.inSampleSize]) (default = 1).
      */
-    data class Config(val scaleFactor: Int = 2) : Serializable
+    data class Config(val scaleFactor: Int = 1) : Serializable
 }
