@@ -80,7 +80,7 @@ class Skanner(val config: Config) {
         val correctedImageURI: URI = createJPGFile(
                 context = context,
                 imageFileName = File(scan.originalImageURI).fileNameWith(suffix = "_CORRECTED")) ?: return null
-        val savedBitmap = loadScaledBitmap(scan.originalImageURI)
+        val savedBitmap = loadBitmap(scan.originalImageURI)
                 ?.correctPerspective(scan.detectedRectangle)
                 ?.saveImage(correctedImageURI)
 
@@ -108,7 +108,14 @@ class Skanner(val config: Config) {
     private fun loadScaledBitmap(imageURI: URI): Bitmap? = BitmapFactory
             .decodeFile(
                     imageURI.path,
-                    BitmapFactory.Options().apply { inSampleSize = config.scaleFactor })
+                    BitmapFactory.Options().apply { inSampleSize = config.scaleFactor.value })
+            .also {
+                if (it == null) Log.e(this::class.java.simpleName, "Error while trying to load a scaled Bitmap from $imageURI")
+            }
+
+    /** Load and return a Bitmap at full scale. */
+    private fun loadBitmap(imageURI: URI): Bitmap? = BitmapFactory
+            .decodeFile(imageURI.path)
             .also {
                 if (it == null) Log.e(this::class.java.simpleName, "Error while trying to load a scaled Bitmap from $imageURI")
             }
