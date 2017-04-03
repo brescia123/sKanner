@@ -36,11 +36,25 @@ data class Skanner(val config: Config) {
             return createFile(context, imageFileName)
         }
 
+        /**
+         * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] with the
+         * following name scheme: [[originalImageURI]]_SCALED.jpg
+         *
+         * @param context a context reference.
+         * @param originalImageURI the original image URI.
+         */
         fun createScaledImageFile(originalImageURI: URI, context: Context): File =
-            createFile(context, originalImageURI.fileNameWith(suffix = "_SCALED"))
+                createFile(context, originalImageURI.fileNameWith(suffix = "_SCALED"))
 
+        /**
+         * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] with the
+         * following name scheme: [[originalImageURI]]_CORRECTED.jpg
+         *
+         * @param context a context reference.
+         * @param originalImageURI the original image URI.
+         */
         fun createCorrectedImageFile(originalImageURI: URI, context: Context): File =
-            createFile(context, originalImageURI.fileNameWith(suffix = "_CORRECTED"))
+                createFile(context, originalImageURI.fileNameWith(suffix = "_CORRECTED"))
 
         private fun createFile(context: Context, imageFileName: String): File {
             val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
