@@ -9,6 +9,7 @@ import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 object Skanner {
 
     /**
@@ -71,6 +72,9 @@ object Skanner {
                 ?.correctPerspective(scan.detectedRectangle)
                 ?.saveImage(correctedImageURI)
 
-        return if (savedBitmap != null) correctedImageURI else null
+        val everythingOk = savedBitmap != null
+        savedBitmap?.recycle()
+
+        return if (everythingOk) correctedImageURI else null
     }
 }

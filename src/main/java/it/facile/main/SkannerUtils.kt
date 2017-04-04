@@ -107,3 +107,6 @@ internal fun URI.detectBitmapDimension(): BitmapDimensions {
     BitmapFactory.decodeFile(path, options)
     return options.outWidth widthTo options.outWidth
 }
+
+/** Detect Bitmap dimension. */
+internal fun Bitmap.detectBitmapDimension(): BitmapDimensions = width widthTo height
