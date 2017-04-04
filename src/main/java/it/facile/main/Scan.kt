@@ -6,14 +6,14 @@ import java.io.Serializable
 import java.net.URI
 
 /**
- * Data class containing the path of the original and the detected document rectangle.
+ * Data class containing the rectangle detected within an image.
  *
- * @property originalImageURI URI of the original image.
+ * @property scannedImageURI URI of the image of reference for the [detectedRectangle].
  * @property detectedRectangle detected document rectangle.
  */
-data class Scan(val originalImageURI: URI, val detectedRectangle: Rectangle) : Serializable {
+data class Scan(val scannedImageURI: URI, val detectedRectangle: Rectangle) : Serializable {
     init {
-        if (File(originalImageURI).exists().not()) throw FileNotFoundException()
+        if (File(scannedImageURI).exists().not()) throw FileNotFoundException()
     }
 }
 

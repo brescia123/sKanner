@@ -54,7 +54,7 @@ class AdjustView : FrameLayout {
     }
 
     fun init(scannedDoc: Scan) {
-        imageBitmap = BitmapFactory.decodeFile(scannedDoc.originalImageURI.path)
+        imageBitmap = BitmapFactory.decodeFile(scannedDoc.scannedImageURI.path)
         imageView = buildImageView()
         scannedDocument = scannedDoc
         addView(imageView)
