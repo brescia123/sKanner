@@ -80,3 +80,19 @@ object Skanner {
         return if (everythingOk) correctedImageURI else null
     }
 }
+
+/**
+ * Function that allows to scan a photo and detect a document inside it.
+ *
+ * @param context context used to access android app folder.
+ */
+fun URI.scanDocument(context: Context): Scan? = Skanner.scanDocument(this, context)
+
+/**
+ * Function that allows to correct the perspective of a [Scan]. It returns the URI of the produced
+ * image file or null if there was some problem.
+ *
+ * @param context context used to access android app folder.
+ */
+fun Scan.correctPerspective(context: Context): URI? = Skanner.correctPerspective(this, context)
+
