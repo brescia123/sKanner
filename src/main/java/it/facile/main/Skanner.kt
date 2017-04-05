@@ -37,7 +37,7 @@ object Skanner {
     }
 
     /**
-     * Function that allows to scan a photo and detect a document inside it.
+     * Scan a photo and detect a document inside it.
      *
      * @param originalImageURI the path of the image to be scanned.
      */
@@ -60,7 +60,7 @@ object Skanner {
     }
 
     /**
-     * Function that allows to correct the perspective of a [Scan]. It returns the URI of the produced
+     * Correct the perspective of a [Scan]. It returns the URI of the produced
      * image file or null if there was some problem.
      *
      * @param scan the source [Scan].
@@ -79,20 +79,36 @@ object Skanner {
 
         return if (everythingOk) correctedImageURI else null
     }
+
+    /**
+     * Add a grayScale filter to the image.
+     */
+    fun makeGrayScale(imageURI: URI): URI? {
+        val bitmap = loadBitmap(imageURI) ?: return null
+        bitmap.grayScale()
+                .saveImage(imageURI)
+                ?.recycle()
+        bitmap.recycle()
+        return imageURI
+    }
 }
 
 /**
- * Function that allows to scan a photo and detect a document inside it.
+ * Scan a photo and detect a document inside it.
  *
  * @param context context used to access android app folder.
  */
 fun URI.scanDocument(context: Context): Scan? = Skanner.scanDocument(this, context)
 
 /**
- * Function that allows to correct the perspective of a [Scan]. It returns the URI of the produced
+ * Correct the perspective of a [Scan]. It returns the URI of the produced
  * image file or null if there was some problem.
  *
  * @param context context used to access android app folder.
  */
 fun Scan.correctPerspective(context: Context): URI? = Skanner.correctPerspective(this, context)
 
+/**
+ * Add a grayScale filter to the image.
+ */
+fun URI.makeGrayScale(): URI? = Skanner.makeGrayScale(this)

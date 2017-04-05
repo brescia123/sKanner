@@ -1,7 +1,8 @@
 package it.facile.main
 
-import android.graphics.Bitmap
+import android.graphics.*
 import org.opencv.core.*
+import org.opencv.core.Point
 import org.opencv.imgproc.Imgproc
 import java.util.*
 
@@ -65,6 +66,18 @@ internal fun Bitmap.correctPerspective(rect: Rectangle): Bitmap {
 
     Imgproc.warpPerspective(this.toMat(), doc, m, doc.size())
     return doc.toBitmap(Bitmap.Config.ARGB_8888)
+}
+
+internal fun Bitmap.grayScale(): Bitmap {
+    val (width, height) = detectBitmapDimension()
+
+    val temp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+    val c = Canvas(temp)
+    val paint = Paint()
+    paint.colorFilter = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
+    c.drawBitmap(this, 0f, 0f, paint)
+
+    return temp
 }
 
 /**
