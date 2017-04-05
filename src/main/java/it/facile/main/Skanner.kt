@@ -49,12 +49,14 @@ object Skanner {
 
         val originalImageDimensions = originalImageURI.detectBitmapDimension()
         val dstImageDimensions = if (originalImageDimensions.isHorizontal()) pdfDimensions.rotate() else pdfDimensions
-        return loadScaledBitmap(
+        val scaledBitmap = loadScaledBitmap(
                 imageURI = originalImageURI,
                 sampleSize = calculateInSampleSize(originalImageDimensions, dstImageDimensions))
-                ?.saveImage(scaledImageURI)
+        val scan = scaledBitmap?.saveImage(scaledImageURI)
                 ?.detectRectangle()
                 ?.buildScan(scaledImageURI)
+        scaledBitmap?.recycle()
+        return scan
     }
 
     /**
