@@ -8,18 +8,26 @@ import java.util.*
 /**
  * Apply an algorithm to detect the bigger, doc-shaped rectangle within a Bitmap.
  */
-internal fun Bitmap.detectRectangle(): Rectangle = (0..2)
-        .map { toMat().detectContours(it) } // Find all the contours ad different channel mixes
-        .reduce { acc, arrayList -> acc.addAll(arrayList); acc } // Accumulate all the contours into a list
-        .filter { Imgproc.contourArea(it) > (width * height) / 10 } // Ignore contours too small
-        .sortedByDescending(Imgproc::contourArea)
-        .map { it.toMatOfPoint2f() }
-        .map { it.approxPolyDP(Imgproc.arcLength(it, true) * 0.02, true) } // Approximate the contour to a polygon
-        .filter { it.toList().size == 4 } // Select only quadrilaterals
-        .filter { it -> it.maxCosine() < 0.3 } // Select the ones that have a doc shape
-        .map { it.toRectangle() }
-        .firstOrNull() // Take the first (max area)
-        ?: perimeterRectangleScaled(0.8f) // if no rectangle is found return the bitmap perimeter contour
+internal fun Bitmap.detectRectangle(): Rectangle {
+    val scaled = scaleDown(0.5f)
+    val rectangle = ((0..2)
+            .map { scaled.toMat().detectContours(it) } // Find all the contours ad different channel mixes
+            .reduce { acc, arrayList -> acc.addAll(arrayList); acc } // Accumulate all the contours into a list
+            .filter { Imgproc.contourArea(it) > (scaled.width * scaled.height) / 10 } // Ignore contours too small
+            .sortedByDescending(Imgproc::contourArea)
+            .map { it.toMatOfPoint2f() }
+            .map { it.approxPolyDP(Imgproc.arcLength(it, true) * 0.02, true) } // Approximate the contour to a polygon
+            .filter { it.toList().size == 4 } // Select only quadrilaterals
+            .filter { it -> it.maxCosine() < 0.3 } // Select the ones that have a doc shape
+            .map { it.toRectangle() }
+            .firstOrNull() // Take the first (max area)
+            ?: perimeterRectangleScaled(0.8f)) // if no rectangle is found return the bitmap perimeter contour
+    scaled.recycle()
+    return rectangle.scale(1 / 0.5f)
+}
+
+private fun Bitmap.scaleDown(scaleFactor: Float): Bitmap =
+        Bitmap.createScaledBitmap(this, (width * scaleFactor).toInt(), (height * scaleFactor).toInt(), true)
 
 /**
  * Apply an algorithm transform the perspective of a given [Rectangle] within a Bitmap.
