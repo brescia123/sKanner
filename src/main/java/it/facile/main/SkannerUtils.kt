@@ -26,6 +26,17 @@ internal object SkannerUtils {
             return null
         }
     }
+    internal fun createPdfFile(context: Context, pdfFileName: String): URI? {
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+        if (storageDir == null)
+            Log.e(TAG, "Error while trying to getExternalFilesDir Environment.DIRECTORY_PICTURES")
+        try {
+            return File.createTempFile(pdfFileName, ".pdf", storageDir).toURI()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error while trying to create file $pdfFileName within Environment.DIRECTORY_PICTURES", e)
+            return null
+        }
+    }
 }
 
 
