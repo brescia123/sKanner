@@ -2,7 +2,6 @@ package it.facile.main
 
 import android.content.Context
 import android.graphics.*
-import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -31,7 +30,7 @@ class AdjustView : FrameLayout {
 
     private val paint: Paint by lazy {
         Paint().apply {
-            color = ContextCompat.getColor(context, R.color.adjustViewColor)
+            color = context.getColor(R.color.adjustViewColor)
             strokeWidth = 2f
             isAntiAlias = true
         }
