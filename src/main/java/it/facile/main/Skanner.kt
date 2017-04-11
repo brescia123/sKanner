@@ -86,7 +86,7 @@ object Skanner {
     fun makeGrayScale(imageURI: URI): URI? {
         val bitmap = loadBitmap(imageURI) ?: return null
 
-        val grayBitmap = bitmap.grayScaleCV()
+        val grayBitmap = bitmap.grayScale()
         grayBitmap.saveImage(imageURI)
 
         grayBitmap.recycle()

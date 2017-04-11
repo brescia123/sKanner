@@ -1,8 +1,7 @@
 package it.facile.main
 
-import android.graphics.*
+import android.graphics.Bitmap
 import org.opencv.core.*
-import org.opencv.core.Point
 import org.opencv.imgproc.Imgproc
 import java.util.*
 
@@ -31,7 +30,7 @@ private fun Bitmap.scaleDown(scaleFactor: Float): Bitmap =
         Bitmap.createScaledBitmap(this, (width * scaleFactor).toInt(), (height * scaleFactor).toInt(), true)
 
 /**
- * Apply an algorithm transform the perspective of a given [Rectangle] within a Bitmap.
+ * Apply an algorithm that transform the perspective of a given [Rectangle] within a Bitmap.
  */
 internal fun Bitmap.correctPerspective(rect: Rectangle): Bitmap {
 
@@ -68,16 +67,16 @@ internal fun Bitmap.correctPerspective(rect: Rectangle): Bitmap {
     return doc.toBitmap(Bitmap.Config.ARGB_8888)
 }
 
+
+/**
+ * Apply a grayscale filter to the bitmap
+ */
 internal fun Bitmap.grayScale(): Bitmap {
-    val (width, height) = detectBitmapDimension()
-
-    val temp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-    val c = Canvas(temp)
-    val paint = Paint()
-    paint.colorFilter = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
-    c.drawBitmap(this, 0f, 0f, paint)
-
-    return temp
+    val src = toMat()
+    val dst = Mat()
+    src.copyTo(dst)
+    Imgproc.cvtColor(src, dst, Imgproc.COLOR_BGRA2GRAY)
+    return dst.toBitmap(Bitmap.Config.ARGB_8888)
 }
 
 /**
