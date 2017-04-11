@@ -9,7 +9,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.URI
 
-internal const val TAG = "SkannerUtils"
+private const val TAG = "SkannerUtils"
 
 internal object SkannerUtils {
 
@@ -116,7 +116,7 @@ internal fun URI.detectBitmapDimension(): BitmapDimensions {
     // Detect only bounds
     val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeFile(path, options)
-    return options.outWidth widthTo options.outWidth
+    return options.outWidth widthTo options.outHeight
 }
 
 /** Detect Bitmap dimension. */
