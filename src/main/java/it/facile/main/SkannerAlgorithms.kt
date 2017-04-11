@@ -9,8 +9,8 @@ import java.util.*
 /**
  * Apply an algorithm to detect the bigger, doc-shaped rectangle within a Bitmap.
  */
-internal fun Bitmap.detectRectangle(): Rectangle {
-    val scaled = scaleDown(0.5f)
+internal fun Bitmap.detectRectangle(scaleForDetection: Float = 0.2f): Rectangle {
+    val scaled = scaleDown(scaleForDetection)
     val rectangle = ((0..2)
             .map { scaled.toMat().detectContours(it) } // Find all the contours ad different channel mixes
             .reduce { acc, arrayList -> acc.addAll(arrayList); acc } // Accumulate all the contours into a list
@@ -22,9 +22,9 @@ internal fun Bitmap.detectRectangle(): Rectangle {
             .filter { it -> it.maxCosine() < 0.3 } // Select the ones that have a doc shape
             .map { it.toRectangle() }
             .firstOrNull() // Take the first (max area)
-            ?: perimeterRectangleScaled(0.8f)) // if no rectangle is found return the bitmap perimeter contour
+            ?: scaled.perimeterRectangleScaled(0.8f)) // if no rectangle is found return the bitmap perimeter contour
     scaled.recycle()
-    return rectangle.scale(1 / 0.5f)
+    return rectangle.scale(1 / scaleForDetection)
 }
 
 private fun Bitmap.scaleDown(scaleFactor: Float): Bitmap =
