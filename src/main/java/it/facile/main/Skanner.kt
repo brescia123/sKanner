@@ -1,16 +1,21 @@
 package it.facile.main
 
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
 import android.os.Environment
 import android.util.Log
 import org.opencv.android.OpenCVLoader
 import java.io.File
+import java.io.FileOutputStream
 import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
 
 object Skanner {
+
+    private const val TAG = "Skanner"
 
     /**
      * Function needed to init OpenCV.
@@ -24,17 +29,32 @@ object Skanner {
     private val pdfDimensions = 595 widthTo 842
 
     /**
-     * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] with the
+     * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] using the
+     * given fileNmae. If the file name is not provided it create a file with the
      * following name scheme: SCAN_yyyyMMdd_HHmmss.jpg . It returns the URI of the created file,
      * null if there was a problem.
      *
      * @param context a context reference.
+     * @param fileName the chosen file name, SCAN_yyyyMMdd_HHmmss.jpg otherwise.
      */
-    fun createFullSizeImageFile(context: Context): URI? {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALIAN).format(Date())
-        val imageFileName = "SCAN_$timeStamp"
-        return SkannerUtils.createJPGFile(context, imageFileName)
-    }
+    fun createFullSizeImageFile(context: Context, fileName: String? = null): URI? =
+            SkannerUtils.createJPGFile(
+                    context = context,
+                    imageFileName = fileName ?: "SCAN_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALIAN).format(Date())}")
+
+    /**
+     * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] using the
+     * given fileNmae. If the file name is not provided it create a file with the
+     * following name scheme: DOCUMENT_yyyyMMdd_HHmmss.jpg . It returns the URI of the created file,
+     * null if there was a problem.
+     *
+     * @param context a context reference.
+     * @param fileName the chosen file name, DOCUMENT_yyyyMMdd_HHmmss.jpg otherwise.
+     */
+    fun createDocumentPdfFile(context: Context, fileName: String? = null): URI? =
+            SkannerUtils.createPdfFile(
+                    context = context,
+                    pdfFileName = fileName ?: "DOCUMENT_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALIAN).format(Date())}")
 
     /**
      * Scan a photo and detect a document inside it.
@@ -46,8 +66,8 @@ object Skanner {
                 context = context,
                 imageFileName = File(originalImageURI).fileNameWith(suffix = "_SCALED")) ?: return null
 
-
         val originalImageDimensions = originalImageURI.detectBitmapDimension()
+        Log.d(TAG, "Original image dimensions: $originalImageDimensions")
         val dstImageDimensions = if (originalImageDimensions.isHorizontal()) pdfDimensions.rotate() else pdfDimensions
         val scaledBitmap = loadScaledBitmap(
                 imageURI = originalImageURI,
@@ -56,6 +76,8 @@ object Skanner {
                 ?.detectRectangle()
                 ?.buildScan(scaledImageURI)
         scaledBitmap?.recycle()
+
+        Log.d(TAG, "scan: $scan")
         return scan
     }
 
@@ -83,8 +105,7 @@ object Skanner {
     /**
      * Add a grayScale filter to the image.
      */
-    fun makeGrayScale(imageURI: URI): URI? {
-        val bitmap = loadBitmap(imageURI) ?: return null
+    fun makeGrayScale(imageURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
 
         val grayBitmap = bitmap.grayScale()
         grayBitmap.saveImage(imageURI)
@@ -94,7 +115,30 @@ object Skanner {
 
         return imageURI
     }
+
+    /**
+     * Create a PDF.
+     */
+    fun createPdf(imageURI: URI, destURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+        val page = pdfDocument.startPage(pageInfo)
+
+        page.canvas.drawBitmap(bitmap, 0f, 0f, Paint())
+
+        pdfDocument.finishPage(page)
+
+        // Save to file
+        FileOutputStream(File(destURI)).let { fos ->
+            pdfDocument.writeTo(fos)
+            pdfDocument.close()
+            fos.close()
+            bitmap.recycle()
+            destURI
+        }
+    }
 }
+
 
 /**
  * Scan a photo and detect a document inside it.
@@ -115,3 +159,8 @@ fun Scan.correctPerspective(context: Context): URI? = Skanner.correctPerspective
  * Add a grayScale filter to the image.
  */
 fun URI.makeGrayScale(): URI? = Skanner.makeGrayScale(this)
+
+/**
+ * Create a pdf and save it at the given URI.
+ */
+fun URI.createPdf(destURI: URI): URI? = Skanner.createPdf(this, destURI)
