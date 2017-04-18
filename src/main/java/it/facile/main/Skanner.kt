@@ -25,8 +25,8 @@ object Skanner {
         else Log.i("Skanner", "OpenCV initialize failed")
     }
 
-    /** Pixel dimension of a PDF page at 72 dpi */
-    private val pdfDimensions = 595 widthTo 842
+    /** Pixel dimension of a PDF page at 144 dpi */
+    private val pdfDimensions = 1190 widthTo 1684
 
     /**
      * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] using the
@@ -69,7 +69,7 @@ object Skanner {
         val originalImageDimensions = originalImageURI.detectBitmapDimension()
         Log.d(TAG, "Original image dimensions: $originalImageDimensions")
         val dstImageDimensions = if (originalImageDimensions.isHorizontal()) pdfDimensions.rotate() else pdfDimensions
-        val scaledBitmap = loadScaledBitmap(
+        val scaledBitmap = loadSampledBitmap(
                 imageURI = originalImageURI,
                 sampleSize = calculateInSampleSize(originalImageDimensions, dstImageDimensions))
         val scan = scaledBitmap?.saveImage(scaledImageURI)

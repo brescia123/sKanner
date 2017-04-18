@@ -64,7 +64,7 @@ internal fun File.fileNameWith(suffix: String): String = with(this) {
 
 
 /** Load and return a Bitmap scaled using inSampleSize as an option, null if there was a problem. */
-internal fun loadScaledBitmap(imageURI: URI, sampleSize: Int): Bitmap? = BitmapFactory
+internal fun loadSampledBitmap(imageURI: URI, sampleSize: Int): Bitmap? = BitmapFactory
         .decodeFile(
                 imageURI.path,
                 BitmapFactory.Options().apply { inSampleSize = sampleSize })
