@@ -30,7 +30,7 @@ object Skanner {
 
     /**
      * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] using the
-     * given fileNmae. If the file name is not provided it create a file with the
+     * given fileName. If the file name is not provided it create a file with the
      * following name scheme: SCAN_yyyyMMdd_HHmmss.jpg . It returns the URI of the created file,
      * null if there was a problem.
      *
@@ -41,20 +41,6 @@ object Skanner {
             SkannerUtils.createJPGFile(
                     context = context,
                     imageFileName = fileName ?: "SCAN_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALIAN).format(Date())}")
-
-    /**
-     * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] using the
-     * given fileNmae. If the file name is not provided it create a file with the
-     * following name scheme: DOCUMENT_yyyyMMdd_HHmmss.jpg . It returns the URI of the created file,
-     * null if there was a problem.
-     *
-     * @param context a context reference.
-     * @param fileName the chosen file name, DOCUMENT_yyyyMMdd_HHmmss.jpg otherwise.
-     */
-    fun createDocumentPdfFile(context: Context, fileName: String? = null): URI? =
-            SkannerUtils.createPdfFile(
-                    context = context,
-                    pdfFileName = fileName ?: "DOCUMENT_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALIAN).format(Date())}")
 
     /**
      * Scan a photo and detect a document inside it.
@@ -117,25 +103,17 @@ object Skanner {
     }
 
     /**
-     * Create a PDF.
+     * Add a black and white filter to the image.
      */
-    fun createPdf(imageURI: URI, destURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
-        val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
+    fun makeBlackAndWhite(imageURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
 
-        page.canvas.drawBitmap(bitmap, 0f, 0f, Paint())
+        val grayBitmap = bitmap.blackAndWhite()
+        grayBitmap.saveImage(imageURI)
 
-        pdfDocument.finishPage(page)
+        grayBitmap.recycle()
+        bitmap.recycle()
 
-        // Save to file
-        FileOutputStream(File(destURI)).let { fos ->
-            pdfDocument.writeTo(fos)
-            pdfDocument.close()
-            fos.close()
-            bitmap.recycle()
-            destURI
-        }
+        return imageURI
     }
 }
 
@@ -161,6 +139,6 @@ fun Scan.correctPerspective(context: Context): URI? = Skanner.correctPerspective
 fun URI.makeGrayScale(): URI? = Skanner.makeGrayScale(this)
 
 /**
- * Create a pdf and save it at the given URI.
+ * Add a black and white filter to the image.
  */
-fun URI.createPdf(destURI: URI): URI? = Skanner.createPdf(this, destURI)
+fun URI.makeBlackAndWhite(): URI? = Skanner.makeBlackAndWhite(this)

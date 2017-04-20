@@ -64,7 +64,7 @@ internal fun Bitmap.correctPerspective(rect: Rectangle): Bitmap {
     val m = Imgproc.getPerspectiveTransform(src_mat, dst_mat)
 
     Imgproc.warpPerspective(this.toMat(), doc, m, doc.size())
-    return doc.toBitmap(Bitmap.Config.ARGB_8888)
+    return doc.toBitmap()
 }
 
 
@@ -75,8 +75,22 @@ internal fun Bitmap.grayScale(): Bitmap {
     val src = toMat()
     val dst = Mat()
     src.copyTo(dst)
-    Imgproc.cvtColor(src, dst, Imgproc.COLOR_BGRA2GRAY)
-    return dst.toBitmap(Bitmap.Config.ARGB_8888)
+
+    Imgproc.cvtColor(src, dst, Imgproc.COLOR_RGBA2GRAY)
+    return dst.toBitmap()
+}
+
+/**
+ * Apply a black and white filter to the bitmap
+ */
+internal fun Bitmap.blackAndWhite(): Bitmap {
+    val src = toMat()
+    val dst = Mat()
+    src.copyTo(dst)
+
+    Imgproc.cvtColor(src, dst, Imgproc.COLOR_RGBA2GRAY)
+    Imgproc.threshold(dst,dst, 128.0,255.0, Imgproc.THRESH_BINARY or Imgproc.THRESH_OTSU)
+    return dst.toBitmap()
 }
 
 /**
