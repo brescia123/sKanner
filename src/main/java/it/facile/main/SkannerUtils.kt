@@ -79,6 +79,23 @@ internal fun loadBitmap(imageURI: URI): Bitmap? = BitmapFactory
             if (it == null) Log.e(TAG, "Error while trying to load a scaled Bitmap from $imageURI")
         }
 
+internal fun loadScaledBitmap(imageURI: URI, targetDimensions: BitmapDimensions): Bitmap? {
+    val (targetWidth, targetHeight) = targetDimensions
+    val (srcWidth, srcHeight) = imageURI.detectBitmapDimension() ?: return null
+
+    val widthScaleFactor = targetWidth / srcWidth
+    val heightScaleFactor = targetHeight / srcHeight
+
+    return BitmapFactory.Options()
+            .apply {
+                inScaled = true
+                inDensity = srcWidth
+                inTargetDensity = targetWidth
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            .let { BitmapFactory.decodeFile(imageURI.path, it) }
+}
+
 /** Convenient class to represent dimensions of a bitmap as width and height. */
 internal data class BitmapDimensions(val width: Int, val height: Int) {
     fun isHorizontal() = width > height
@@ -112,10 +129,11 @@ internal fun calculateInSampleSize(srcDimensions: BitmapDimensions, reqDimension
 }
 
 /** Load the image the given URI and detect its dimension. */
-internal fun URI.detectBitmapDimension(): BitmapDimensions {
+internal fun URI.detectBitmapDimension(): BitmapDimensions? {
     // Detect only bounds
     val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeFile(path, options)
+    if (options.outWidth < 0 || options.outHeight < 0) return null
     return options.outWidth widthTo options.outHeight
 }
 

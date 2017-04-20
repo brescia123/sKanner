@@ -66,7 +66,7 @@ object Skanner {
                 context = context,
                 imageFileName = File(originalImageURI).fileNameWith(suffix = "_SCALED")) ?: return null
 
-        val originalImageDimensions = originalImageURI.detectBitmapDimension()
+        val originalImageDimensions = originalImageURI.detectBitmapDimension() ?: return null
         Log.d(TAG, "Original image dimensions: $originalImageDimensions")
         val dstImageDimensions = if (originalImageDimensions.isHorizontal()) pdfDimensions.rotate() else pdfDimensions
         val scaledBitmap = loadSampledBitmap(
