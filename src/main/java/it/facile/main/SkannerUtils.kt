@@ -133,9 +133,16 @@ internal fun URI.detectBitmapDimension(): BitmapDimensions? {
     // Detect only bounds
     val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeFile(path, options)
-    if (options.outWidth < 0 || options.outHeight < 0) return null
+    if (options.outWidth < 0 || options.outHeight < 0) {
+        logError("Impossible to detect dimensions of ${this.path}")
+        return null
+    }
     return options.outWidth widthTo options.outHeight
 }
 
 /** Detect Bitmap dimension. */
 internal fun Bitmap.detectBitmapDimension(): BitmapDimensions = width widthTo height
+
+internal inline fun <reified T> T.logError(msg: String) {
+    Log.e(T::class.java.simpleName, msg)
+}

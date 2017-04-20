@@ -48,12 +48,18 @@ object Skanner {
      * @param originalImageURI the path of the image to be scanned.
      */
     fun scanDocument(originalImageURI: URI, context: Context): Scan? {
-        val scaledImageURI: URI = SkannerUtils.createJPGFile(
+        val scaledImageURI: URI? = SkannerUtils.createJPGFile(
                 context = context,
-                imageFileName = File(originalImageURI).fileNameWith(suffix = "_SCALED")) ?: return null
+                imageFileName = File(originalImageURI).fileNameWith(suffix = "_SCALED"))
+
+        if (scaledImageURI == null) {
+            logError("Impossible to create 'scaledImageURI'")
+            return null
+        }
 
         val originalImageDimensions = originalImageURI.detectBitmapDimension() ?: return null
-        Log.d(TAG, "Original image dimensions: $originalImageDimensions")
+
+
         val dstImageDimensions = if (originalImageDimensions.isHorizontal()) pdfDimensions.rotate() else pdfDimensions
         val scaledBitmap = loadSampledBitmap(
                 imageURI = originalImageURI,
