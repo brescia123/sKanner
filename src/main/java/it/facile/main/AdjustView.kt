@@ -1,7 +1,10 @@
 package it.facile.main
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PointF
 import android.os.Build
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -63,7 +66,7 @@ class AdjustView : FrameLayout {
      * Initialize the view with a Scan. It shows the
      */
     fun init(scannedDoc: Scan) {
-        imageBitmap = BitmapFactory.decodeFile(scannedDoc.scannedImageURI.path)
+        imageBitmap = loadBitmap(scannedDoc.scannedImageURI)!!
         imageView = buildImageView()
         scannedDocument = scannedDoc
         addView(imageView)
