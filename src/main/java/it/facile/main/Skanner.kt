@@ -80,45 +80,16 @@ object Skanner {
      * @param scan the source [Scan].
      * @param context a [Context] reference.
      */
-    fun correctPerspective(scan: Scan, context: Context): URI? {
-        val correctedImageURI: URI = SkannerUtils.createJPGFile(
-                context = context,
-                imageFileName = File(scan.scannedImageURI).fileNameWith(suffix = "_CORRECTED")) ?: return null
-        val savedBitmap = loadBitmap(scan.scannedImageURI)
-                ?.correctPerspective(scan.detectedRectangle)
-                ?.saveImage(correctedImageURI)
-
-        val everythingOk = savedBitmap != null
-        savedBitmap?.recycle()
-
-        return if (everythingOk) correctedImageURI else null
-    }
+    fun correctPerspective(scan: Scan): Bitmap? =
+            loadBitmap(scan.scannedImageURI)?.correctPerspective(scan.detectedRectangle)
 
     /**
      * Add a grayScale filter to the image.
      */
-    fun makeGrayScale(imageURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
-
-        val grayBitmap = bitmap.grayScale()
-        grayBitmap.saveImage(imageURI)
-
-        grayBitmap.recycle()
-        bitmap.recycle()
-
-        return imageURI
-    }
+    fun makeGrayScale(image: Bitmap): Bitmap? = image.grayScale()
 
     /**
      * Add a black and white filter to the image.
      */
-    fun makeBlackAndWhite(imageURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
-
-        val grayBitmap = bitmap.blackAndWhite()
-        grayBitmap.saveImage(imageURI)
-
-        grayBitmap.recycle()
-        bitmap.recycle()
-
-        return imageURI
-    }
+    fun makeBlackAndWhite(image: Bitmap): Bitmap? = image.blackAndWhite()
 }
