@@ -26,27 +26,16 @@ internal object SkannerUtils {
             return null
         }
     }
-    internal fun createPdfFile(context: Context, pdfFileName: String): URI? {
-        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-        if (storageDir == null)
-            Log.e(TAG, "Error while trying to getExternalFilesDir Environment.DIRECTORY_PICTURES")
-        try {
-            return File.createTempFile(pdfFileName, ".pdf", storageDir).toURI()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error while trying to create file $pdfFileName within Environment.DIRECTORY_PICTURES", e)
-            return null
-        }
-    }
 }
 
 
 /** Save the Bitmap to the given file. Return the saved Bitmap, null if there was a problem. */
-internal fun Bitmap.saveImage(fileURI: URI): Bitmap? {
+fun Bitmap.saveImage(fileURI: URI, quality: Int = 100): Bitmap? {
     try {
-        val fos = FileOutputStream(File(fileURI))
-        val compressSuccessful = compress(Bitmap.CompressFormat.JPEG, 100, fos)
-        if (compressSuccessful.not()) Log.e(TAG, "Error while trying to compress to file ($fileURI) a Bitmap")
-        fos.close()
+        FileOutputStream(File(fileURI)).use {
+            val compressSuccessful = compress(Bitmap.CompressFormat.JPEG, quality, it)
+            if (compressSuccessful.not()) Log.e(TAG, "Error while trying to compress to file ($fileURI) a Bitmap")
+        }
         return this
     } catch (e: Exception) {
         Log.e(TAG, "Error while trying to save to file ($fileURI) a Bitmap", e)
@@ -62,16 +51,6 @@ internal fun File.fileNameWith(suffix: String): String = with(this) {
     return "$nameWithoutExtension$suffix"
 }
 
-
-/** Load and return a Bitmap scaled using inSampleSize as an option, null if there was a problem. */
-internal fun loadSampledBitmap(imageURI: URI, sampleSize: Int): Bitmap? = BitmapFactory
-        .decodeFile(
-                imageURI.path,
-                BitmapFactory.Options().apply { inSampleSize = sampleSize })
-        .also {
-            if (it == null) Log.e(TAG, "Error while trying to load a scaled Bitmap from $imageURI")
-        }
-
 /** Load and return a Bitmap at full scale. */
 internal fun loadBitmap(imageURI: URI): Bitmap? = BitmapFactory
         .decodeFile(imageURI.path)
@@ -79,12 +58,8 @@ internal fun loadBitmap(imageURI: URI): Bitmap? = BitmapFactory
             if (it == null) Log.e(TAG, "Error while trying to load a scaled Bitmap from $imageURI")
         }
 
-internal fun loadScaledBitmap(imageURI: URI, targetDimensions: BitmapDimensions): Bitmap? {
-    val (targetWidth, targetHeight) = targetDimensions
-    val (srcWidth, srcHeight) = imageURI.detectBitmapDimension() ?: return null
-
-    val widthScaleFactor = targetWidth / srcWidth
-    val heightScaleFactor = targetHeight / srcHeight
+internal fun URI.loadScaledBitmap(targetWidth: Int): Bitmap? {
+    val (srcWidth, _) = this.detectBitmapDimension() ?: return null
 
     return BitmapFactory.Options()
             .apply {
@@ -93,7 +68,7 @@ internal fun loadScaledBitmap(imageURI: URI, targetDimensions: BitmapDimensions)
                 inTargetDensity = targetWidth
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             }
-            .let { BitmapFactory.decodeFile(imageURI.path, it) }
+            .let { BitmapFactory.decodeFile(path, it) }
 }
 
 /** Convenient class to represent dimensions of a bitmap as width and height. */
@@ -103,30 +78,6 @@ internal data class BitmapDimensions(val width: Int, val height: Int) {
 }
 
 internal infix fun Int.widthTo(height: Int) = BitmapDimensions(this, height)
-
-/** Create a the sample size (a positive int that is a power of 2) to be used to load a large Bitmap
- * into memory. */
-internal fun calculateInSampleSize(srcDimensions: BitmapDimensions, reqDimensions: BitmapDimensions): Int {
-    // Thanks to https://developer.android.com/topic/performance/graphics/load-bitmap.html
-
-    val (reqHeight, reqWidth) = reqDimensions
-    val (srcHeight, srcWidth) = srcDimensions
-    var inSampleSize = 1
-
-    if (srcHeight > reqHeight || srcWidth > reqWidth) {
-
-        val halfHeight = srcHeight / 2
-        val halfWidth = srcWidth / 2
-
-        // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-        // srcHeight and srcWidth larger than the requested srcHeight and srcWidth.
-        while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
-            inSampleSize *= 2
-        }
-    }
-
-    return inSampleSize
-}
 
 /** Load the image the given URI and detect its dimension. */
 internal fun URI.detectBitmapDimension(): BitmapDimensions? {

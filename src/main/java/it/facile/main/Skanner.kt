@@ -1,17 +1,14 @@
 package it.facile.main
 
 import android.content.Context
-import android.graphics.Paint
-import android.graphics.pdf.PdfDocument
+import android.graphics.Bitmap
 import android.os.Environment
 import android.util.Log
 import org.opencv.android.OpenCVLoader
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 object Skanner {
 
@@ -24,9 +21,6 @@ object Skanner {
         if (OpenCVLoader.initDebug()) Log.i("Skanner", "OpenCV initialize success")
         else Log.i("Skanner", "OpenCV initialize failed")
     }
-
-    /** Pixel dimension of a PDF page at 144 dpi */
-    private val pdfDimensions = 1190 widthTo 1684
 
     /**
      * Convenient function used to create a file inside [Environment.DIRECTORY_PICTURES] using the
@@ -44,32 +38,30 @@ object Skanner {
 
     /**
      * Scan a photo and detect a document inside it.
+     * If the image is too big to be processed in memory it creates a scaled version and scans it.
      *
-     * @param originalImageURI the path of the image to be scanned.
+     * @param originalImageURI the URI of the image to be scanned.
+     * @param context a [Context] reference.
      */
     fun scanDocument(originalImageURI: URI, context: Context): Scan? {
-        val scaledImageURI: URI? = SkannerUtils.createJPGFile(
-                context = context,
-                imageFileName = File(originalImageURI).fileNameWith(suffix = "_SCALED"))
+        Log.d("Skanner", "scanDocument: Start document scanning: ${originalImageURI.path}")
 
-        if (scaledImageURI == null) {
-            logError("Impossible to create 'scaledImageURI'")
-            return null
+        val originalWidth = originalImageURI.detectBitmapDimension()?.width ?: return null
+
+        val maxWidth = context.resources.displayMetrics.let { it.widthPixels * it.density } * 2
+
+        val scan = if (originalWidth > maxWidth) {
+            Log.d("Skanner", "scanDocument: The original bitmap is too big, using a scaled version (${maxWidth / originalWidth})")
+            val targetURI = SkannerUtils.createJPGFile(context, File(originalImageURI).fileNameWith(suffix = "_SCALED")) ?: return null
+            val scaledBitmap = originalImageURI.loadScaledBitmap(maxWidth.toInt())
+            scaledBitmap?.saveImage(targetURI) to targetURI
+        } else {
+            Log.d("Skanner", "scanDocument: Using the original image")
+            loadBitmap(originalImageURI) to originalImageURI
+        }.let { (bitmap, uri): Pair<Bitmap?, URI> ->
+            bitmap?.detectRectangle()?.buildScan(uri).also { bitmap?.recycle() }
         }
-
-        val originalImageDimensions = originalImageURI.detectBitmapDimension() ?: return null
-
-
-        val dstImageDimensions = if (originalImageDimensions.isHorizontal()) pdfDimensions.rotate() else pdfDimensions
-        val scaledBitmap = loadSampledBitmap(
-                imageURI = originalImageURI,
-                sampleSize = calculateInSampleSize(originalImageDimensions, dstImageDimensions))
-        val scan = scaledBitmap?.saveImage(scaledImageURI)
-                ?.detectRectangle()
-                ?.buildScan(scaledImageURI)
-        scaledBitmap?.recycle()
-
-        Log.d(TAG, "scan: $scan")
+        Log.d("Skanner", "scanDocument: Scan done $scan")
         return scan
     }
 
@@ -80,71 +72,16 @@ object Skanner {
      * @param scan the source [Scan].
      * @param context a [Context] reference.
      */
-    fun correctPerspective(scan: Scan, context: Context): URI? {
-        val correctedImageURI: URI = SkannerUtils.createJPGFile(
-                context = context,
-                imageFileName = File(scan.scannedImageURI).fileNameWith(suffix = "_CORRECTED")) ?: return null
-        val savedBitmap = loadBitmap(scan.scannedImageURI)
-                ?.correctPerspective(scan.detectedRectangle)
-                ?.saveImage(correctedImageURI)
-
-        val everythingOk = savedBitmap != null
-        savedBitmap?.recycle()
-
-        return if (everythingOk) correctedImageURI else null
-    }
+    fun correctPerspective(scan: Scan): Bitmap? =
+            loadBitmap(scan.scannedImageURI)?.correctPerspective(scan.detectedRectangle)
 
     /**
      * Add a grayScale filter to the image.
      */
-    fun makeGrayScale(imageURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
-
-        val grayBitmap = bitmap.grayScale()
-        grayBitmap.saveImage(imageURI)
-
-        grayBitmap.recycle()
-        bitmap.recycle()
-
-        return imageURI
-    }
+    fun makeGrayScale(image: Bitmap): Bitmap? = image.grayScale()
 
     /**
      * Add a black and white filter to the image.
      */
-    fun makeBlackAndWhite(imageURI: URI): URI? = loadBitmap(imageURI)?.let { bitmap ->
-
-        val grayBitmap = bitmap.blackAndWhite()
-        grayBitmap.saveImage(imageURI)
-
-        grayBitmap.recycle()
-        bitmap.recycle()
-
-        return imageURI
-    }
+    fun makeBlackAndWhite(image: Bitmap): Bitmap? = image.blackAndWhite()
 }
-
-
-/**
- * Scan a photo and detect a document inside it.
- *
- * @param context context used to access android app folder.
- */
-fun URI.scanDocument(context: Context): Scan? = Skanner.scanDocument(this, context)
-
-/**
- * Correct the perspective of a [Scan]. It returns the URI of the produced
- * image file or null if there was some problem.
- *
- * @param context context used to access android app folder.
- */
-fun Scan.correctPerspective(context: Context): URI? = Skanner.correctPerspective(this, context)
-
-/**
- * Add a grayScale filter to the image.
- */
-fun URI.makeGrayScale(): URI? = Skanner.makeGrayScale(this)
-
-/**
- * Add a black and white filter to the image.
- */
-fun URI.makeBlackAndWhite(): URI? = Skanner.makeBlackAndWhite(this)
