@@ -122,29 +122,3 @@ object Skanner {
         return imageURI
     }
 }
-
-
-/**
- * Scan a photo and detect a document inside it.
- *
- * @param context context used to access android app folder.
- */
-fun URI.scanDocument(context: Context): Scan? = Skanner.scanDocument(this, context)
-
-/**
- * Correct the perspective of a [Scan]. It returns the URI of the produced
- * image file or null if there was some problem.
- *
- * @param context context used to access android app folder.
- */
-fun Scan.correctPerspective(context: Context): URI? = Skanner.correctPerspective(this, context)
-
-/**
- * Add a grayScale filter to the image.
- */
-fun URI.makeGrayScale(): URI? = Skanner.makeGrayScale(this)
-
-/**
- * Add a black and white filter to the image.
- */
-fun URI.makeBlackAndWhite(): URI? = Skanner.makeBlackAndWhite(this)
