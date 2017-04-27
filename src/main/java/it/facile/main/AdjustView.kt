@@ -46,7 +46,8 @@ class AdjustView : FrameLayout {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        if (measured == false and initialized == true) {
+        if (isInEditMode) return
+        if (measured == false && initialized == true) {
             drawPointers(scannedDocument.detectedRectangle, imageBitmap, imageView)
             invalidate()
             measured = true
