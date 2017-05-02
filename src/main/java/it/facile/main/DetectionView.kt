@@ -96,10 +96,7 @@ class DetectionView @JvmOverloads constructor(context: Context,
                 radius,
                 requirements.bitmap.width,
                 requirements.bitmap.height,
-                { x, y ->
-                    pointer.setPosition(x, y, radius)
-                    invalidate()
-                }))
+                { _, _ -> invalidate() }))
     }
 
     private fun positionPointers(requirements: DetectionRequirements) {
