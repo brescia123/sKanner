@@ -80,6 +80,7 @@ class DetectionView @JvmOverloads constructor(context: Context,
     }
 
     fun setScan(scan: Scan) {
+        if (scan == requirements?.scan) return
         requirements?.bitmap?.recycle()
         requirements = DetectionRequirements(
                 scan = scan,
