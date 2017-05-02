@@ -16,17 +16,20 @@ class DetectionView @JvmOverloads constructor(context: Context,
 
     private data class PointerAttr(val pointerRadius: Int, val pointerColor: Int, val lineThickness: Float)
 
-    private val viewAttrs by lazy {
+    private val viewAttrs: PointerAttr
+
+    init {
         val a = context.theme.obtainStyledAttributes(attrs, R.styleable.DetectionView, 0, 0)
         try {
             val pointerRadius = a.getInteger(R.styleable.DetectionView_pointerRadius, 32)
             val pointerColor = a.getColor(R.styleable.DetectionView_pointerColor, R.color.adjustViewColor)
             val lineThickness = a.getFloat(R.styleable.DetectionView_lineThickness, 2f)
-            return@lazy PointerAttr(pointerRadius, pointerColor, lineThickness)
+            viewAttrs = PointerAttr(pointerRadius, pointerColor, lineThickness)
         } finally {
             a.recycle()
         }
     }
+
 
     private val pointerView1: ImageView by lazy { createAndAddPointer(context, viewAttrs.pointerRadius, viewAttrs.pointerColor) }
     private val pointerView2: ImageView by lazy { createAndAddPointer(context, viewAttrs.pointerRadius, viewAttrs.pointerColor) }
