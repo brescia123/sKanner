@@ -1,2 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <declare-styleable name="DetectionView">
+        <attr name="pointerRadius" format="enum">
+            <enum name="small" value="64"/>
+            <enum name="medium" value="96"/>
+            <enum name="big" value="128"/>
+        </attr>
+        <attr name="pointerColor" format="color" />
+        <attr name="lineThickness" format="float" />
+    </declare-styleable>
+</resources>
