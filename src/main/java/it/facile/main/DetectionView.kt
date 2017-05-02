@@ -81,15 +81,21 @@ class DetectionView @JvmOverloads constructor(context: Context,
 
     fun setScan(scan: Scan) {
         if (scan == requirements?.scan) return
-        requirements?.bitmap?.recycle()
+        val bitmap = if (scan.scannedImageURI == requirements?.scan?.scannedImageURI)
+            requirements!!.bitmap // requirements could not be null if the condition is true
+        else {
+            requirements?.bitmap?.recycle()
+            loadBitmap(scan.scannedImageURI) ?: return
+        }
         requirements = DetectionRequirements(
                 scan = scan,
-                bitmap = loadBitmap(scan.scannedImageURI) ?: return)
+                bitmap = bitmap)
         docImageView.setImageBitmap(requirements?.bitmap)
         setPointersTouchListener(pointerView1, requirements!!, viewAttrs.pointerRadius)
         setPointersTouchListener(pointerView2, requirements!!, viewAttrs.pointerRadius)
         setPointersTouchListener(pointerView3, requirements!!, viewAttrs.pointerRadius)
         setPointersTouchListener(pointerView4, requirements!!, viewAttrs.pointerRadius)
+        requestLayout()
         invalidate()
     }
 
@@ -107,12 +113,12 @@ class DetectionView @JvmOverloads constructor(context: Context,
     private fun updateScan() {
         requirements?.let {
             val scaleFactor = 1 / calculateScaleFactor(it.bitmap, docImageView)
-            it.scan = it.scan.copy(detectedRectangle = it.scan.detectedRectangle.copy(
+            requirements = it.copy(scan = it.scan.copy(detectedRectangle = it.scan.detectedRectangle.copy(
                     p1 = pointerView1.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
                     p2 = pointerView2.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
                     p3 = pointerView3.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
                     p4 = pointerView4.getPosition(viewAttrs.pointerRadius).scale(scaleFactor)
-            ))
+            )))
         }
     }
 

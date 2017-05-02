@@ -10,7 +10,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import it.facile.skanner.R
 
-internal data class DetectionRequirements(var scan: Scan, val bitmap: Bitmap)
+internal data class DetectionRequirements(val scan: Scan, val bitmap: Bitmap)
 
 internal fun createPointer(context: Context, radius: Int, color: Int): ImageView {
     val pointer = if (Build.VERSION.SDK_INT >= 22)
