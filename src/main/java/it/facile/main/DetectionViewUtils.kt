@@ -31,13 +31,13 @@ internal fun calculateScaleFactor(bitmap: Bitmap, imageView: ImageView): Float =
         minOf(imageView.measuredWidth.toFloat() / bitmap.width,
                 imageView.measuredHeight.toFloat() / bitmap.height)
 
-internal fun ImageView.setPosition(newX: Int, newY: Int, radius: Int) {
-    x = newX.toFloat() - radius
-    y = newY.toFloat() - radius
+internal fun ImageView.setPosition(newX: Int, newY: Int, radius: Int, horizontalSpace: Int, verticalSpace: Int) {
+    x = newX.toFloat() - radius + (horizontalSpace / 2)
+    y = newY.toFloat() - radius + (verticalSpace / 2)
 }
 
-internal fun ImageView.getPosition(radius: Int): Pt =
-        Math.round(x) + radius to Math.round(y) + radius
+internal fun ImageView.getPosition(radius: Int, horizontalSpace: Int, verticalSpace: Int): Pt =
+        Math.round(x) + radius - (horizontalSpace / 2) to Math.round(y) + radius - (verticalSpace / 2)
 
 internal fun Canvas.drawLine(from: Pt, to: Pt, paint: Paint) =
         drawLine(from.first.toFloat(), from.second.toFloat(), to.first.toFloat(), to.second.toFloat(), paint)

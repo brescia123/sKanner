@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -58,26 +59,32 @@ class DetectionView @JvmOverloads constructor(context: Context,
         if (isInEditMode) return
         if (requirements == null) return
 
+
+        setPointersTouchListener(pointerView1, docImageView.measuredWidth, docImageView.measuredHeight, viewAttrs.pointerRadius)
+        setPointersTouchListener(pointerView2, docImageView.measuredWidth, docImageView.measuredHeight, viewAttrs.pointerRadius)
+        setPointersTouchListener(pointerView3, docImageView.measuredWidth, docImageView.measuredHeight, viewAttrs.pointerRadius)
+        setPointersTouchListener(pointerView4, docImageView.measuredWidth, docImageView.measuredHeight, viewAttrs.pointerRadius)
+
         positionPointers(requirements!!)
     }
 
     override fun dispatchDraw(canvas: Canvas?) {
         super.dispatchDraw(canvas)
         canvas?.drawLine(
-                from = pointerView1.getPosition(viewAttrs.pointerRadius),
-                to = pointerView2.getPosition(viewAttrs.pointerRadius),
+                from = pointerView1.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
+                to = pointerView2.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
                 paint = paint)
         canvas?.drawLine(
-                from = pointerView2.getPosition(viewAttrs.pointerRadius),
-                to = pointerView3.getPosition(viewAttrs.pointerRadius),
+                from = pointerView2.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
+                to = pointerView3.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
                 paint = paint)
         canvas?.drawLine(
-                from = pointerView3.getPosition(viewAttrs.pointerRadius),
-                to = pointerView4.getPosition(viewAttrs.pointerRadius),
+                from = pointerView3.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
+                to = pointerView4.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
                 paint = paint)
         canvas?.drawLine(
-                from = pointerView4.getPosition(viewAttrs.pointerRadius),
-                to = pointerView1.getPosition(viewAttrs.pointerRadius),
+                from = pointerView4.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
+                to = pointerView1.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight),
                 paint = paint)
     }
 
@@ -97,10 +104,6 @@ class DetectionView @JvmOverloads constructor(context: Context,
                 scan = scan,
                 bitmap = bitmap)
         docImageView.setImageBitmap(requirements?.bitmap)
-        setPointersTouchListener(pointerView1, requirements!!, viewAttrs.pointerRadius)
-        setPointersTouchListener(pointerView2, requirements!!, viewAttrs.pointerRadius)
-        setPointersTouchListener(pointerView3, requirements!!, viewAttrs.pointerRadius)
-        setPointersTouchListener(pointerView4, requirements!!, viewAttrs.pointerRadius)
         requestLayout()
         invalidate()
     }
@@ -109,11 +112,11 @@ class DetectionView @JvmOverloads constructor(context: Context,
 
     /* Utils method */
 
-    private fun setPointersTouchListener(pointer: ImageView, req: DetectionRequirements, radius: Int) {
+    private fun setPointersTouchListener(pointer: ImageView, imageWidth: Int, imageHeight: Int, radius: Int) {
         pointer.setOnTouchListener(PointerTouchListener(
                 pointerRadius = radius,
-                imageWidth = req.bitmap.width,
-                imageHeight = req.bitmap.height,
+                imageWidth = imageWidth,
+                imageHeight = imageHeight,
                 onTouch = { invalidate() },
                 onTouchFinished = {
                     requirements = requirements?.updateScan()
@@ -124,26 +127,28 @@ class DetectionView @JvmOverloads constructor(context: Context,
     private fun DetectionRequirements.updateScan(): DetectionRequirements {
         val scaleFactor = 1 / calculateScaleFactor(this.bitmap, docImageView)
         return this.copy(scan = this.scan.copy(detectedRectangle = this.scan.detectedRectangle.copy(
-                p1 = pointerView1.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
-                p2 = pointerView2.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
-                p3 = pointerView3.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
-                p4 = pointerView4.getPosition(viewAttrs.pointerRadius).scale(scaleFactor)
+                p1 = pointerView1.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight).scale(scaleFactor),
+                p2 = pointerView2.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight).scale(scaleFactor),
+                p3 = pointerView3.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight).scale(scaleFactor),
+                p4 = pointerView4.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight).scale(scaleFactor)
         )))
     }
 
     private fun positionPointers(requirements: DetectionRequirements) {
         val scaledRectangle = requirements.scan.detectedRectangle.scale(calculateScaleFactor(requirements.bitmap, docImageView))
-        pointerView1.setPosition(scaledRectangle.p1.first, scaledRectangle.p1.second, viewAttrs.pointerRadius)
-        pointerView2.setPosition(scaledRectangle.p2.first, scaledRectangle.p2.second, viewAttrs.pointerRadius)
-        pointerView3.setPosition(scaledRectangle.p3.first, scaledRectangle.p3.second, viewAttrs.pointerRadius)
-        pointerView4.setPosition(scaledRectangle.p4.first, scaledRectangle.p4.second, viewAttrs.pointerRadius)
+        pointerView1.setPosition(scaledRectangle.p1.first, scaledRectangle.p1.second, viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight)
+        pointerView2.setPosition(scaledRectangle.p2.first, scaledRectangle.p2.second, viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight)
+        pointerView3.setPosition(scaledRectangle.p3.first, scaledRectangle.p3.second, viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight)
+        pointerView4.setPosition(scaledRectangle.p4.first, scaledRectangle.p4.second, viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight)
     }
 
     private fun createAndAddPointer(context: Context, radius: Int, color: Int): ImageView =
             createPointer(context, radius, color).apply { addView(this) }
 
     private fun buildAndAddDocImageView(context: Context) = ImageView(context).apply {
-        layoutParams = LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        val params = LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        params.gravity = Gravity.CENTER
+        layoutParams = params
         adjustViewBounds = true
         addView(this)
     }
