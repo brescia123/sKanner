@@ -48,12 +48,14 @@ object Skanner {
 
         val originalWidth = originalImageURI.detectBitmapDimension()?.width ?: return null
 
-        val maxWidth = context.resources.displayMetrics.let { it.widthPixels * it.density } * 2
+        val maxWidth = context.calculateMaxDeviceMaxWidth()
+
+        Log.d(TAG, "MaxWidth: $maxWidth")
 
         val scan = if (originalWidth > maxWidth) {
-            Log.d("Skanner", "scanDocument: The original bitmap is too big, using a scaled version (${maxWidth / originalWidth})")
+            Log.d("Skanner", "scanDocument: The original bitmap is too big, using a scaled version ($originalWidth -> $maxWidth)")
             val targetURI = SkannerUtils.createJPGFile(context, File(originalImageURI).fileNameWith(suffix = "_SCALED")) ?: return null
-            val scaledBitmap = originalImageURI.loadScaledBitmap(maxWidth.toInt())
+            val scaledBitmap = originalImageURI.loadScaledBitmap(maxWidth)
             scaledBitmap?.saveImage(targetURI) to targetURI
         } else {
             Log.d("Skanner", "scanDocument: Using the original image")
@@ -66,11 +68,9 @@ object Skanner {
     }
 
     /**
-     * Correct the perspective of a [Scan]. It returns the URI of the produced
-     * image file or null if there was some problem.
+     * Correct the perspective of a [Scan].
      *
      * @param scan the source [Scan].
-     * @param context a [Context] reference.
      */
     fun correctPerspective(scan: Scan): Bitmap? =
             loadBitmap(scan.scannedImageURI)?.correctPerspective(scan.detectedRectangle)
