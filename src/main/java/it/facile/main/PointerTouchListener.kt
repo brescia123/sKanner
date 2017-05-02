@@ -4,7 +4,7 @@ import android.graphics.PointF
 import android.view.MotionEvent
 import android.view.View
 
-internal class PointerTouchListener(val pointerRadius: Int, val imageWidth: Int, val imageHeight: Int, val onTouch: (Int, Int) -> Unit) : View.OnTouchListener {
+internal class PointerTouchListener(val pointerRadius: Int, val imageWidth: Int, val imageHeight: Int, val onTouch: () -> Unit, val onTouchFinished: () -> Unit) : View.OnTouchListener {
 
     private var downPt = PointF()
     private var startPt = PointF()
@@ -24,8 +24,11 @@ internal class PointerTouchListener(val pointerRadius: Int, val imageWidth: Int,
                 downPt.y = event.y
                 startPt = PointF(v.x, v.y)
             }
+            MotionEvent.ACTION_UP -> {
+                onTouchFinished.invoke()
+            }
         }
-        onTouch.invoke(startPt.x.toInt(), startPt.y.toInt())
+        onTouch.invoke()
         return true
     }
 

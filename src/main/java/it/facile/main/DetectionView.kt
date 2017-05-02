@@ -95,12 +95,25 @@ class DetectionView @JvmOverloads constructor(context: Context,
 
     fun getScan(): Scan? = requirements?.scan
 
-    private fun setPointersTouchListener(pointer: ImageView,requirements: DetectionRequirements, radius: Int) {
+    private fun setPointersTouchListener(pointer: ImageView, requirements: DetectionRequirements, radius: Int) {
         pointer.setOnTouchListener(PointerTouchListener(
-                radius,
-                requirements.bitmap.width,
-                requirements.bitmap.height,
-                { _, _ -> invalidate() }))
+                pointerRadius = radius,
+                imageWidth = requirements.bitmap.width,
+                imageHeight = requirements.bitmap.height,
+                onTouch = { invalidate() },
+                onTouchFinished = { updateScan() }))
+    }
+
+    private fun updateScan() {
+        requirements?.let {
+            val scaleFactor = 1 / calculateScaleFactor(it.bitmap, docImageView)
+            it.scan = it.scan.copy(detectedRectangle = it.scan.detectedRectangle.copy(
+                    p1 = pointerView1.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
+                    p2 = pointerView2.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
+                    p3 = pointerView3.getPosition(viewAttrs.pointerRadius).scale(scaleFactor),
+                    p4 = pointerView4.getPosition(viewAttrs.pointerRadius).scale(scaleFactor)
+            ))
+        }
     }
 
     private fun positionPointers(requirements: DetectionRequirements) {
