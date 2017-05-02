@@ -22,6 +22,7 @@ internal fun createPointer(context: Context, radius: Int, color: Int): ImageView
 
     return ImageView(context).apply {
         layoutParams = FrameLayout.LayoutParams(radius * 2, radius * 2)
+        setPadding(radius / 2, radius / 2, radius / 2, radius / 2)
         setImageDrawable(pointer)
     }
 }

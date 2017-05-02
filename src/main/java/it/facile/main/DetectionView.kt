@@ -21,9 +21,9 @@ class DetectionView @JvmOverloads constructor(context: Context,
     init {
         val a = context.theme.obtainStyledAttributes(attrs, R.styleable.DetectionView, 0, 0)
         try {
-            val pointerRadius = a.getInteger(R.styleable.DetectionView_pointerRadius, 32)
+            val pointerRadius = a.getInteger(R.styleable.DetectionView_pointerRadius, 96)
             val pointerColor = a.getColor(R.styleable.DetectionView_pointerColor, R.color.adjustViewColor)
-            val lineThickness = a.getFloat(R.styleable.DetectionView_lineThickness, 2f)
+            val lineThickness = a.getFloat(R.styleable.DetectionView_lineThickness, 4f)
             viewAttrs = PointerAttr(pointerRadius, pointerColor, lineThickness)
         } finally {
             a.recycle()

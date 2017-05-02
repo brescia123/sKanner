@@ -2,9 +2,9 @@
 <resources>
     <declare-styleable name="DetectionView">
         <attr name="pointerRadius" format="enum">
-            <enum name="small" value="16"/>
-            <enum name="medium" value="32"/>
-            <enum name="big" value="48"/>
+            <enum name="small" value="64"/>
+            <enum name="medium" value="96"/>
+            <enum name="big" value="128"/>
         </attr>
         <attr name="pointerColor" format="color" />
         <attr name="lineThickness" format="float" />
