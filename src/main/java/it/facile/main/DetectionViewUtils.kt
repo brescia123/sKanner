@@ -1,7 +1,6 @@
 package it.facile.main
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.PorterDuff
@@ -10,7 +9,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import it.facile.skanner.R
 
-internal data class DetectionRequirements(val scan: Scan, val bitmap: Bitmap)
+internal data class DetectionRequirements(val scan: Scan, val bitmapDimensions: BitmapDimensions)
 
 internal fun createPointer(context: Context, radius: Int, color: Int): ImageView {
     val pointer = if (Build.VERSION.SDK_INT >= 22)
@@ -27,9 +26,9 @@ internal fun createPointer(context: Context, radius: Int, color: Int): ImageView
     }
 }
 
-internal fun calculateScaleFactor(bitmap: Bitmap, imageView: ImageView): Float =
-        minOf(imageView.measuredWidth.toFloat() / bitmap.width,
-                imageView.measuredHeight.toFloat() / bitmap.height)
+internal fun calculateScaleFactor(bitmapDimension: BitmapDimensions, imageView: ImageView): Float =
+        minOf(imageView.measuredWidth.toFloat() / bitmapDimension.width,
+                imageView.measuredHeight.toFloat() / bitmapDimension.height)
 
 internal fun ImageView.setPosition(newX: Int, newY: Int, radius: Int, horizontalSpace: Int, verticalSpace: Int) {
     x = newX.toFloat() - radius + (horizontalSpace / 2)

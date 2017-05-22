@@ -1,14 +1,21 @@
 package it.facile.main
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
+import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
+import com.bumptech.glide.load.resource.bitmap.TransformationUtils
 import it.facile.skanner.R
+import java.io.File
 
 
 class DetectionView @JvmOverloads constructor(context: Context,
@@ -66,6 +73,8 @@ class DetectionView @JvmOverloads constructor(context: Context,
         setPointersTouchListener(pointerView4, docImageView.measuredWidth, docImageView.measuredHeight, viewAttrs.pointerRadius)
 
         positionPointers(requirements!!)
+
+        docImageView.imageMatrix = Matrix().apply { preRotate(90f) }
     }
 
     override fun dispatchDraw(canvas: Canvas?) {
@@ -92,25 +101,33 @@ class DetectionView @JvmOverloads constructor(context: Context,
 
     var scanChangedListener: (Scan) -> Unit = {}
 
+    fun rotate90() {
+        class Trans(context: Context) : BitmapTransformation(context) {
+            override fun getId() = "Trans"
+
+            override fun transform(pool: BitmapPool?, toTransform: Bitmap?, outWidth: Int, outHeight: Int): Bitmap {
+                return TransformationUtils.rotateImage(toTransform, 90).saveImage(requirements!!.scan.scannedImageURI)!!
+            }
+
+        }
+        Glide.with(context)
+                .load(File(requirements!!.scan.scannedImageURI.path)) // Uri of the picture
+                .transform(Trans(context))
+                .into(docImageView)
+    }
+
     fun setScan(scan: Scan) {
         if (scan == requirements?.scan) return
-        val bitmap = if (scan.scannedImageURI == requirements?.scan?.scannedImageURI)
-            requirements!!.bitmap // requirements could not be null if the condition is true
-        else {
-            requirements?.bitmap?.recycle()
-            loadBitmap(scan.scannedImageURI) ?: return
-        }
         requirements = DetectionRequirements(
                 scan = scan,
-                bitmap = bitmap)
-        docImageView.setImageBitmap(requirements?.bitmap)
+                bitmapDimensions = scan.scannedImageURI.detectBitmapDimension() ?: return)
         requestLayout()
         invalidate()
     }
 
     fun getScan(): Scan? = requirements?.scan
 
-    /* Utils method */
+/* Utils method */
 
     private fun setPointersTouchListener(pointer: ImageView, imageWidth: Int, imageHeight: Int, radius: Int) {
         pointer.setOnTouchListener(PointerTouchListener(
@@ -125,7 +142,7 @@ class DetectionView @JvmOverloads constructor(context: Context,
     }
 
     private fun DetectionRequirements.updateScan(): DetectionRequirements {
-        val scaleFactor = 1 / calculateScaleFactor(this.bitmap, docImageView)
+        val scaleFactor = 1 / calculateScaleFactor(this.bitmapDimensions, docImageView)
         return this.copy(scan = this.scan.copy(detectedRectangle = this.scan.detectedRectangle.copy(
                 p1 = pointerView1.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight).scale(scaleFactor),
                 p2 = pointerView2.getPosition(viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight).scale(scaleFactor),
@@ -135,7 +152,7 @@ class DetectionView @JvmOverloads constructor(context: Context,
     }
 
     private fun positionPointers(requirements: DetectionRequirements) {
-        val scaledRectangle = requirements.scan.detectedRectangle.scale(calculateScaleFactor(requirements.bitmap, docImageView))
+        val scaledRectangle = requirements.scan.detectedRectangle.scale(calculateScaleFactor(requirements.bitmapDimensions, docImageView))
         pointerView1.setPosition(scaledRectangle.p1.first, scaledRectangle.p1.second, viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight)
         pointerView2.setPosition(scaledRectangle.p2.first, scaledRectangle.p2.second, viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight)
         pointerView3.setPosition(scaledRectangle.p3.first, scaledRectangle.p3.second, viewAttrs.pointerRadius, measuredWidth - docImageView.measuredWidth, measuredHeight - docImageView.measuredHeight)
@@ -149,6 +166,7 @@ class DetectionView @JvmOverloads constructor(context: Context,
         val params = LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         params.gravity = Gravity.CENTER
         layoutParams = params
+        scaleType = ImageView.ScaleType.MATRIX
         adjustViewBounds = true
         addView(this)
     }

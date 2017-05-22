@@ -3,6 +3,7 @@ package it.facile.main
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.GLES31
@@ -31,6 +32,15 @@ internal object SkannerUtils {
     }
 }
 
+fun Bitmap.rotate90(): Bitmap? {
+    val matrix = Matrix()
+    matrix.preRotate(90f)
+    val rotatedBitmap = Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+    this.recycle()
+    Log.d("Rotate90", "${rotatedBitmap.detectBitmapDimension()}")
+    return rotatedBitmap
+}
+
 
 /** Save the Bitmap to the given file. Return the saved Bitmap, null if there was a problem. */
 fun Bitmap.saveImage(fileURI: URI, quality: Int = 100): Bitmap? {
@@ -44,6 +54,20 @@ fun Bitmap.saveImage(fileURI: URI, quality: Int = 100): Bitmap? {
         Log.e(TAG, "Error while trying to save to file ($fileURI) a Bitmap", e)
         return null
     }
+}
+
+internal fun Rectangle.rotate90(): Rectangle = copy(p1 = p4, p2 = p1, p3 = p2, p4 = p3)
+
+enum class Rotation(val degree: Int) {
+    DEGREE_0(0),
+    DEGREE_90(90),
+    DEGREE_180(180),
+    DEGREE_270(270)
+}
+
+fun Scan.rotate90(): Scan {
+    loadBitmap(scannedImageURI)?.rotate90()?.saveImage(scannedImageURI)?.recycle()
+    return copy(detectedRectangle = detectedRectangle.rotate90())
 }
 
 /** Create a [Scan] from a [Rectangle]. */

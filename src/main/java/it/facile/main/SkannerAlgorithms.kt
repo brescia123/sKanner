@@ -64,6 +64,7 @@ internal fun Bitmap.correctPerspective(rect: Rectangle): Bitmap {
     val m = Imgproc.getPerspectiveTransform(src_mat, dst_mat)
 
     Imgproc.warpPerspective(this.toMat(), doc, m, doc.size())
+    recycle()
     return doc.toBitmap()
 }
 
@@ -77,6 +78,7 @@ internal fun Bitmap.grayScale(): Bitmap {
     src.copyTo(dst)
 
     Imgproc.cvtColor(src, dst, Imgproc.COLOR_RGBA2GRAY)
+    recycle()
     return dst.toBitmap()
 }
 
@@ -90,6 +92,7 @@ internal fun Bitmap.blackAndWhite(): Bitmap {
 
     Imgproc.cvtColor(src, dst, Imgproc.COLOR_RGBA2GRAY)
     Imgproc.threshold(dst,dst, 128.0,255.0, Imgproc.THRESH_BINARY or Imgproc.THRESH_OTSU)
+    recycle()
     return dst.toBitmap()
 }
 
